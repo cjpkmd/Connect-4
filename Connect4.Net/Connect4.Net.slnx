@@ -1,3 +1,8 @@
 <Solution>
+  <Project Path="Connect4.App.Tests/Connect4.App.Tests.csproj" />
+  <Project Path="Connect4.App/Connect4.App.csproj" />
+  <Project Path="Connect4.Engine.Tests/Connect4.Engine.Tests.csproj" />
+  <Project Path="Connect4.Engine/Connect4.Engine.csproj" />
+  <Project Path="Connect4.Web/Connect4.Web.csproj" />
   <Project Path="Connect4.WPF/Connect4.WPF.csproj" />
 </Solution>

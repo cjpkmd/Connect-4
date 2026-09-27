@@ -9,7 +9,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace Connect_4.WPF
+namespace Connect4.WPF
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml

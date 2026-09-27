@@ -2,7 +2,7 @@
 using System.Data;
 using System.Windows;
 
-namespace Connect_4.WPF
+namespace Connect4.WPF
 {
     /// <summary>
     /// Interaction logic for App.xaml
