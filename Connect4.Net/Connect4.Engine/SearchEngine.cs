@@ -13,6 +13,9 @@ namespace Connect4.Engine;
 /// </summary>
 public sealed class SearchEngine
 {
+    /// <summary>Table size used when the requested one cannot be allocated (e.g. in a browser on a phone).</summary>
+    public const int FallbackLogSize = 20;
+
     private const int Infinity = Scores.Win + 1;
 
     // When the solver will run in fixed-depth mode, this shallow search only gives a move for Move Now.
@@ -34,6 +37,7 @@ public sealed class SearchEngine
     /// <param name="hashLogSize">The search hash table has 2^hashLogSize entries of 8 bytes (24 = 128 MiB).</param>
     /// <param name="endgameLogSize">Size of the endgame solver's table (24 ≈ 84 MB); allocated the first time the solver runs.</param>
     /// <param name="random">Picks among equally good moves; seed it for repeatable games.</param>
+    /// <remarks>A table that cannot be allocated gets 2^<see cref="FallbackLogSize"/> entries instead.</remarks>
     public SearchEngine(
         int hashLogSize = TranspositionTable.DefaultLogSize,
         int endgameLogSize = EndgameTable.DefaultLogSize,
@@ -43,11 +47,16 @@ public sealed class SearchEngine
         ArgumentOutOfRangeException.ThrowIfLessThan(endgameLogSize, EndgameTable.MinLogSize);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(endgameLogSize, EndgameTable.MaxLogSize);
 
-        _table = new TranspositionTable(hashLogSize);
+        _table = AllocateWithFallback(
+            () => new TranspositionTable(hashLogSize),
+            () => new TranspositionTable(Math.Min(hashLogSize, FallbackLogSize)));
         _endgameLogSize = endgameLogSize;
         _evaluator = evaluator ?? Evaluator.Default;
         _random = random ?? new Random();
     }
+
+    /// <summary>True when a table got the fallback size because the requested size could not be allocated.</summary>
+    public bool UsesFallbackTables { get; private set; }
 
     /// <summary>Clears the search hash table (at New Game). The endgame solver's table is kept: its results never go stale.</summary>
     public void ClearHash() => _table.Clear();
@@ -301,7 +310,9 @@ public sealed class SearchEngine
 
     private Best SolveRoot(Position position, Best heuristic, bool timed)
     {
-        _endgame ??= new EndgameSolver(_endgameLogSize);
+        _endgame ??= AllocateWithFallback(
+            () => new EndgameSolver(_endgameLogSize),
+            () => new EndgameSolver(Math.Min(_endgameLogSize, FallbackLogSize)));
         Report(position.EmptyCells, heuristic.Columns[0], heuristic.Columns[0], heuristic.Score, heuristic.Kind, position, solving: true);
 
         using var source = CancellationTokenSource.CreateLinkedTokenSource(_cancel, _moveNow);
@@ -369,6 +380,19 @@ public sealed class SearchEngine
     }
 
     private static ScoreKind Kind(int score) => Scores.IsDecided(score) ? ScoreKind.Exact : ScoreKind.Heuristic;
+
+    internal T AllocateWithFallback<T>(Func<T> preferred, Func<T> fallback)
+    {
+        try
+        {
+            return preferred();
+        }
+        catch (OutOfMemoryException)
+        {
+            UsesFallbackTables = true;
+            return fallback();
+        }
+    }
 
     private void CheckAbort()
     {

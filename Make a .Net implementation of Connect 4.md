@@ -171,7 +171,7 @@ Weights are tuned by hand (`EvaluationWeights`). Engine-vs-engine tuning can com
 
   Without packing (Stello's record struct with a `ulong` key is 16 bytes with padding), the search table would take 256 MiB.
 - Both sizes are constructor parameters (search table 2^16–2^26, endgame table 2^17–2^27). Tests use small tables, because clearing a large table for every test position costs more than the search.
-- Browser: if the allocation fails (e.g. on a phone), the Web Worker falls back to 2^20 entries per table.
+- If a table cannot be allocated (e.g. in a browser on a phone), `SearchEngine` falls back to 2^20 entries for that table and sets `UsesFallbackTables`.
 - The heuristic table is cleared at New Game; both tables are kept between moves in the same game.
 
 ### 4.7 Computer strength and variation
