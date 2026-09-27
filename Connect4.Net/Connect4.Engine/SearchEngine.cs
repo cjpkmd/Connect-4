@@ -316,15 +316,12 @@ public sealed class SearchEngine
         Report(position.EmptyCells, heuristic.Columns[0], heuristic.Columns[0], heuristic.Score, heuristic.Kind, position, solving: true);
 
         using var source = CancellationTokenSource.CreateLinkedTokenSource(_cancel, _moveNow);
-        if (timed)
-        {
-            source.CancelAfter(TimeSpan.FromMilliseconds(Math.Max(0, _hardLimitMs - _clock.ElapsedMilliseconds)));
-        }
+        TimeSpan? timeLimit = timed ? TimeSpan.FromMilliseconds(Math.Max(0, _hardLimitMs - _clock.ElapsedMilliseconds)) : null;
 
         long nodesBefore = _endgame.NodeCount;
         try
         {
-            int[] scores = _endgame.Analyze(position, cancellation: source.Token);
+            int[] scores = _endgame.Analyze(position, cancellation: source.Token, timeLimit: timeLimit);
             int[] playable = [.. Enumerable.Range(0, Position.Width).Where(c => scores[c] != EndgameSolver.InvalidMove)];
             int best = playable.Max(c => Scores.FromSolver(scores[c], position));
             int[] ties = [.. playable.Where(c => Scores.FromSolver(scores[c], position) == best)];

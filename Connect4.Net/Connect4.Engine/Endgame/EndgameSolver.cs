@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Connect4.Engine.Search;
 
 namespace Connect4.Engine.Endgame;
@@ -19,6 +20,7 @@ public sealed class EndgameSolver
 
     private readonly EndgameTable _table;
     private CancellationToken _cancellation;
+    private long _deadline;
 
     /// <param name="logSize">The hash table has the first prime above 2^logSize entries of 5 bytes (24 ≈ 84 MB).</param>
     public EndgameSolver(int logSize = EndgameTable.DefaultLogSize)
@@ -36,9 +38,50 @@ public sealed class EndgameSolver
     }
 
     /// <summary>The exact score of the position; if <paramref name="weak"/>, only the sign (loss / draw / win) is exact.</summary>
+    /// <param name="timeLimit">Checked with a clock, not a timer, so it also works where timers cannot fire during a search (a browser worker).</param>
     /// <remarks>The position must not contain a four. Results found before a cancellation stay in the hash table.</remarks>
-    /// <exception cref="OperationCanceledException">The token was cancelled; use CancelAfter for a deadline.</exception>
-    public int Solve(Position position, bool weak = false, CancellationToken cancellation = default)
+    /// <exception cref="OperationCanceledException">The token was cancelled or the time limit was reached.</exception>
+    public int Solve(Position position, bool weak = false, CancellationToken cancellation = default, TimeSpan? timeLimit = null)
+    {
+        SetLimits(cancellation, timeLimit);
+        return SolveCore(position, weak);
+    }
+
+    /// <summary>The score of every column, as <see cref="Solve"/>; <see cref="InvalidMove"/> for full columns.</summary>
+    /// <param name="timeLimit">For all columns together.</param>
+    /// <exception cref="OperationCanceledException">The token was cancelled or the time limit was reached.</exception>
+    public int[] Analyze(Position position, bool weak = false, CancellationToken cancellation = default, TimeSpan? timeLimit = null)
+    {
+        SetLimits(cancellation, timeLimit);
+        int[] scores = new int[Position.Width];
+        for (int column = 0; column < Position.Width; column++)
+        {
+            if (!position.CanPlay(column))
+            {
+                scores[column] = InvalidMove;
+            }
+            else if (position.IsWinningMove(column))
+            {
+                scores[column] = (Position.CellCount + 1 - position.Moves) / 2;
+            }
+            else
+            {
+                scores[column] = -SolveCore(position.Play(column), weak);
+            }
+        }
+
+        return scores;
+    }
+
+    private void SetLimits(CancellationToken cancellation, TimeSpan? timeLimit)
+    {
+        _cancellation = cancellation;
+        _deadline = timeLimit is { } limit
+            ? Stopwatch.GetTimestamp() + (long)(limit.TotalSeconds * Stopwatch.Frequency)
+            : long.MaxValue;
+    }
+
+    private int SolveCore(Position position, bool weak)
     {
         if (position.CanWinNext)
         {
@@ -53,7 +96,6 @@ public sealed class EndgameSolver
             max = 1;
         }
 
-        _cancellation = cancellation;
         while (min < max)
         {
             int med = min + (max - min) / 2;
@@ -80,30 +122,6 @@ public sealed class EndgameSolver
         return min;
     }
 
-    /// <summary>The score of every column, as <see cref="Solve"/>; <see cref="InvalidMove"/> for full columns.</summary>
-    /// <exception cref="OperationCanceledException">The token was cancelled.</exception>
-    public int[] Analyze(Position position, bool weak = false, CancellationToken cancellation = default)
-    {
-        int[] scores = new int[Position.Width];
-        for (int column = 0; column < Position.Width; column++)
-        {
-            if (!position.CanPlay(column))
-            {
-                scores[column] = InvalidMove;
-            }
-            else if (position.IsWinningMove(column))
-            {
-                scores[column] = (Position.CellCount + 1 - position.Moves) / 2;
-            }
-            else
-            {
-                scores[column] = -Solve(position.Play(column), weak, cancellation);
-            }
-        }
-
-        return scores;
-    }
-
     /// <summary>
     /// Negamax alpha-beta. The side to move must not be able to win at once. Returns the exact score if it is
     /// inside (alpha, beta), otherwise a bound on the same side of the window as the exact score.
@@ -114,6 +132,10 @@ public sealed class EndgameSolver
         if ((NodeCount & CancellationCheckMask) == 0)
         {
             _cancellation.ThrowIfCancellationRequested();
+            if (Stopwatch.GetTimestamp() >= _deadline)
+            {
+                throw new OperationCanceledException("The time limit was reached.");
+            }
         }
 
         ulong possible = position.NonLosingMoves();

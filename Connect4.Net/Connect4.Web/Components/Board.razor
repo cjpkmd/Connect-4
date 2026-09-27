@@ -1,0 +1,128 @@
+@* Seven columns; each is one button, so a click anywhere in a column drops a disc. Cells are listed top row first. *@
+<div class="board @BoardClass @(Appearance.Discs3D ? "discs-3d" : null)" role="group" aria-label="Board">
+    <div class="columns">
+        <div class="face"></div>
+        @for (int column = 0; column < Position.Width; column++)
+        {
+            int c = column;
+            <button class="column" aria-label="@Describe(c)" @onclick="() => Play(c)">
+                <span class="preview @PreviewClass"></span>
+                @for (int row = Position.Height - 1; row >= 0; row--)
+                {
+                    int index = (Position.Height - 1 - row) * Position.Width + c;
+                    CellViewModel cell = Cells[index];
+                    <span class="cell">
+                        @if (cell.Disc is { } disc)
+                        {
+                            <span @key="_animations[index]" class="disc @(disc == Player.Red ? "red" : "yellow") @_animations[index].Class"
+                                  style="@_animations[index].Style"></span>
+                        }
+                        @if (cell.IsWinning)
+                        {
+                            <span class="winning"></span>
+                        }
+                        @if (cell.IsLastMove)
+                        {
+                            <span class="last"></span>
+                        }
+                    </span>
+                }
+            </button>
+        }
+    </div>
+    <div class="numbers" aria-hidden="true">
+        @for (int column = 0; column < Position.Width; column++)
+        {
+            <span>@(column + 1)</span>
+        }
+    </div>
+</div>
+
+@code {
+    // A fall from the preview row to the bottom (6 cells) takes about 0.37 s, as in the desktop app.
+    private const double FallSecondsPerSquareRootCell = 0.15;
+
+    private readonly Player?[] _shown = new Player?[Position.CellCount];
+    private readonly DiscAnimation[] _animations = Enumerable.Repeat(DiscAnimation.None, Position.CellCount).ToArray();
+    private int _generation;
+    private DateTime _fallingUntil;
+
+    [Parameter, EditorRequired]
+    public IReadOnlyList<CellViewModel> Cells { get; set; } = [];
+
+    /// <summary>The colour shown above the column under the mouse; null when no human is to move.</summary>
+    [Parameter]
+    public Player? NextDisc { get; set; }
+
+    [Parameter, EditorRequired]
+    public Appearance Appearance { get; set; } = Appearance.Default;
+
+    [Parameter]
+    public EventCallback<int> OnPlay { get; set; }
+
+    private string BoardClass => Appearance.Board switch
+    {
+        BoardStyle.GoldenOak => "wood golden-oak",
+        BoardStyle.ReddishWood => "wood reddish-wood",
+        _ => "blue",
+    };
+
+    private string PreviewClass => NextDisc switch
+    {
+        Player.Red => "red",
+        Player.Yellow => "yellow",
+        _ => "none",
+    };
+
+    // A move or two (the human's and the computer's reply) fall; New Game, Back, Forward and Open just redraw.
+    protected override void OnParametersSet()
+    {
+        int placed = Enumerable.Range(0, Position.CellCount).Count(i => _shown[i] is null && Cells[i].Disc is not null);
+        bool animate = Appearance.AnimateDrops && placed is 1 or 2;
+        if (animate)
+        {
+            _generation++;
+        }
+
+        for (int i = 0; i < Position.CellCount; i++)
+        {
+            Player? now = Cells[i].Disc;
+            if (now == _shown[i])
+            {
+                continue;
+            }
+
+            _animations[i] = animate && now is not null && _shown[i] is null ? Fall(Cells[i]) : DiscAnimation.None;
+            _shown[i] = now;
+        }
+    }
+
+    private DiscAnimation Fall(CellViewModel cell)
+    {
+        int cells = Position.Height - cell.Row;
+        double seconds = FallSecondsPerSquareRootCell * Math.Sqrt(cells);
+        DateTime lands = DateTime.UtcNow.AddSeconds(seconds);
+        if (lands > _fallingUntil)
+        {
+            _fallingUntil = lands;
+        }
+
+        return new DiscAnimation(_generation, "falling", FormattableString.Invariant($"--fall: {cells}; animation-duration: {seconds:0.000}s"));
+    }
+
+    // Clicks are ignored while a disc falls.
+    private Task Play(int column) => DateTime.UtcNow < _fallingUntil ? Task.CompletedTask : OnPlay.InvokeAsync(column);
+
+    private string Describe(int column)
+    {
+        Player?[] discs = [.. Enumerable.Range(0, Position.Height).Select(row => Cells[row * Position.Width + column].Disc)];
+        int count = discs.Count(disc => disc is not null);
+        return $"Column {column + 1}, {count} of {Position.Height} discs" + (count == Position.Height ? ", full" : "");
+    }
+
+    // A new record (new generation) gives the disc element a new key, so the CSS animation starts again.
+    private sealed record DiscAnimation(int Generation, string? Class, string? Style)
+    {
+        public static DiscAnimation None { get; } = new(0, null, null);
+    }
+}

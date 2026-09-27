@@ -14,6 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Markdig" Version="1.4.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.12" PrivateAssets="all" />
   </ItemGroup>
@@ -22,5 +23,26 @@
     <ProjectReference Include="..\Connect4.App\Connect4.App.csproj" />
     <ProjectReference Include="..\Connect4.Engine\Connect4.Engine.csproj" />
   </ItemGroup>
+
+  <!-- The brain documentation is shown by the Docs pages; a linked file is not served by the dev server, so it is copied (git-ignored). -->
+  <Target Name="CopyBrainDocs" BeforeTargets="AssignTargetPaths">
+    <ItemGroup>
+      <BrainDocs Include="..\..\docs\brain\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BrainDocs)" DestinationFiles="@(BrainDocs->'wwwroot\content\brain\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <ItemGroup>
+      <Content Remove="wwwroot\content\brain\**" />
+      <Content Include="wwwroot\content\brain\**" />
+    </ItemGroup>
+  </Target>
+
+  <!-- The picture in the About box, shared with the WPF app (git-ignored copy). -->
+  <Target Name="CopyAboutPicture" BeforeTargets="AssignTargetPaths">
+    <Copy SourceFiles="..\Images\2026 Claus Pedersen.jpg" DestinationFiles="wwwroot\images\claus-pedersen.jpg" SkipUnchangedFiles="true" />
+    <ItemGroup>
+      <Content Remove="wwwroot\images\claus-pedersen.jpg" />
+      <Content Include="wwwroot\images\claus-pedersen.jpg" />
+    </ItemGroup>
+  </Target>
 
 </Project>

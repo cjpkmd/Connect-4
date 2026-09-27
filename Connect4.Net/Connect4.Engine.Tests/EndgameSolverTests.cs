@@ -77,6 +77,14 @@ public class EndgameSolverTests
     }
 
     [Fact]
+    public void Solve_TimeLimitReached_Throws()
+    {
+        var solver = new EndgameSolver(SmallLogSize);
+
+        Assert.ThrowsAny<OperationCanceledException>(() => solver.Solve(Position.Empty, timeLimit: TimeSpan.FromMilliseconds(20)));
+    }
+
+    [Fact]
     public void Reset_ClearsTheNodeCount()
     {
         var solver = new EndgameSolver(SmallLogSize);

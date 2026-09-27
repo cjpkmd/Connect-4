@@ -380,3 +380,9 @@ $RECYCLE.BIN/
 .DS_Store
 
 connect4-master/
+
+# Brain documentation copied from docs/brain by the Connect4.Web build
+Connect4.Net/Connect4.Web/wwwroot/content/
+
+# About picture copied from Connect4.Net/Images by the Connect4.Web build
+Connect4.Net/Connect4.Web/wwwroot/images/
