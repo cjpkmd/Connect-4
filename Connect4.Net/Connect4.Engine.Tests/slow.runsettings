@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Runs only the slow tests: dotnet test Connect4.Engine.Tests -s Connect4.Engine.Tests/slow.runsettings -->
+<RunSettings>
+  <RunConfiguration>
+    <TestCaseFilter>Category=Slow</TestCaseFilter>
+  </RunConfiguration>
+</RunSettings>

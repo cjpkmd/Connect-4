@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Slow tests run only on purpose, with the filter Category=Slow. -->
+<RunSettings>
+  <RunConfiguration>
+    <TestCaseFilter>Category!=Slow</TestCaseFilter>
+  </RunConfiguration>
+</RunSettings>

@@ -80,7 +80,7 @@ flowchart LR
 | `play`, `canPlay`, `possible`, `isWinningMove`, `canWinNext` | Same names in C# style | 1:1 port. |
 | `compute_winning_position`, `winning_position`, `opponent_winning_position` | `WinningCells(player)` | All empty cells that would complete a four. Used by move ordering, pruning **and** the evaluation. |
 | `possibleNonLosingMoves` | `NonLosingMoves` | Removes moves that let the opponent win at once. If the opponent has two immediate threats, the position is lost. |
-| `moveScore`, `MoveSorter`, `columnOrder` (3,4,2,5,1,6,0) | `MoveOrdering` | TT best move first (from Stello), then C++ order. |
+| `moveScore`, `MoveSorter`, `columnOrder` (3,2,4,1,5,0,6) | `MoveOrdering` | TT best move first (from Stello), then C++ order. |
 | `popcount` loop | `BitOperations.PopCount` | |
 | `key()` | `Key` | Transposition table key. `key3()` (mirror key for the book) is not needed without a book. |
 | `Solver::solve` / `negamax` | `EndgameSolver` | 1:1 port of the exact solver (null-window loop, alpha-beta, pruning). Added: deadline and `CancellationToken`, so an unfinished solve can be dropped. |
@@ -260,7 +260,7 @@ Test data (`Test positions/`, 6 files × 1000 lines, `<moves> <score>` in the C+
 | `Test_L2_R2` | Middle | Medium | First lines in normal runs, all as slow test |
 | `Test_L1_R1`, `Test_L1_R2`, `Test_L1_R3` | Beginning (≤ 14 moves) | Easy – hard | Slow tests only; without a book they can take a long time |
 
-The test project links the files from `Test positions/` (as Stello links its OPENING file), so they stay in one place. Slow tests get `[Trait("Category", "Slow")]` and are excluded from normal runs; they are run on purpose with `dotnet test --filter Category=Slow`.
+The test project links the files from `Test positions/` (as Stello links its OPENING file), so they stay in one place. Slow tests get `[Trait("Category", "Slow")]` and are excluded from normal runs by `default.runsettings`; they are run on purpose with `dotnet test Connect4.Engine.Tests -c Release -s Connect4.Engine.Tests/slow.runsettings` (`Test_L1_R3` alone takes about 40 minutes).
 
 App:
 
