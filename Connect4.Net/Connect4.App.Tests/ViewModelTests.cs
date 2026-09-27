@@ -61,6 +61,18 @@ public sealed class ViewModelTests
     }
 
     [Fact]
+    public void Analysis_ShowsABookMove()
+    {
+        var analysis = new AnalysisViewModel();
+        var result = new SearchResult(3, Scores.Win - 41, ScoreKind.Exact, 0, 0, TimeSpan.Zero, [3], FromBook: true);
+
+        analysis.Update(result, Position.Empty, TimeSpan.Zero);
+
+        Assert.Equal("book", analysis.Depth);
+        Assert.Equal("Red wins in 21 moves", analysis.Value);
+    }
+
+    [Fact]
     public void GameSettings_Normalize_ClampsEveryValue()
     {
         GameSettings settings = new GameSettings(TimeControlMode.Solve, 0, 99, -1, 50).Normalize();
@@ -76,15 +88,26 @@ public sealed class ViewModelTests
         Assert.Equal(TimeControlMode.TimePerGame, limits.Mode);
         Assert.Equal(TimeSpan.FromMinutes(2), limits.Time);
         Assert.Equal(12, limits.EndgameThreshold);
+        Assert.True(limits.UseBook);
+    }
+
+    [Fact]
+    public void GameSettings_ToLimits_PassesUseOpeningBook()
+    {
+        var settings = new GameSettings(TimeControlMode.FixedDepth, 8, 5, 5, UseOpeningBook: false);
+
+        Assert.False(settings.Normalize().ToLimits(TimeSpan.Zero).UseBook);
+        Assert.True(GameSettings.Default.UseOpeningBook);
     }
 
     [Fact]
     public void SettingsViewModel_RoundTrips()
     {
-        var settings = new GameSettings(TimeControlMode.FixedDepth, 12, 7, 9, 30);
+        var settings = new GameSettings(TimeControlMode.FixedDepth, 12, 7, 9, 30, UseOpeningBook: false);
         var vm = new SettingsViewModel(settings);
 
         Assert.True(vm.IsFixedDepth);
+        Assert.False(vm.UseOpeningBook);
         vm.IsTimePerGame = true;
 
         Assert.Equal(settings with { Mode = TimeControlMode.TimePerGame }, vm.ToSettings());
@@ -117,6 +140,7 @@ public sealed class ViewModelTests
         AppSettings? settings = JsonSerializer.Deserialize(json, AppSettingsJson.Default.AppSettings);
 
         Assert.Equal(SearchLimits.DefaultEndgameThreshold, settings!.Game.EndgameThreshold);
+        Assert.True(settings.Game.UseOpeningBook);
     }
 
     [Theory]

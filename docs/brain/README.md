@@ -5,9 +5,10 @@ Connect 4 is a game for two players on a board with 7 columns and 6 rows. The co
 - **the board and rules**: bitboards, move generation and threat detection, ported from Pascal Pons' C++ solver (connect4-master);
 - **the evaluation**: threats, odd/even rows, open lines and centre control;
 - **the search**: iterative deepening alpha-beta (principal variation search) with a hash table, stopped by a depth or time limit, as in Stello;
-- **the endgame solver**: the C++ solver, ported 1:1, which finds the exact result near the end of the game.
+- **the endgame solver**: the C++ solver, ported 1:1, which finds the exact result near the end of the game;
+- **the opening book**: the exact scores of every position of the first 6 plies, made with the endgame solver by `Connect4.Tools`.
 
-There is no opening book. These documents explain how the parts work and how they fit together. They describe the C# code in [Connect4.Net](../../Connect4.Net). How the C++ code was ported, and what was changed, is described in [Connect 4 porting documentation.md](../../Connect%204%20porting%20documentation.md).
+These documents explain how the parts work and how they fit together. They describe the C# code in [Connect4.Net](../../Connect4.Net). How the C++ code was ported, and what was changed, is described in [Connect 4 porting documentation.md](../../Connect%204%20porting%20documentation.md).
 
 ## The brain on one page
 
@@ -15,7 +16,9 @@ This is how the computer finds a move. Each box is explained in a chapter.
 
 ```mermaid
 flowchart TD
-    Start["Position and time limits"] --> Win{"A move that wins at once?"}
+    Start["Position and time limits"] --> Book{"Fewer than 6 discs<br/>and the book is on?"}
+    Book -- "yes" --> PlayBook["Play the best book move<br/>(exact, at once)"]
+    Book -- "no" --> Win{"A move that wins at once?"}
     Win -- "yes" --> PlayWin["Play it (exact win)"]
     Win -- "no" --> Safe{"Moves that do not lose at once?"}
     Safe -- "none" --> Lost["Play any move (exact loss)"]
@@ -49,11 +52,12 @@ The time limit can stop the search at any point; the best move of the last finis
 | 11 | [App integration](11-app-integration.md) | The game loop, threading, the browser worker, settings |
 | 12 | [Glossary](12-glossary.md) | The terms used in these documents |
 | 13 | [References](13-references.md) | Articles and source code on the internet |
+| 14 | [Opening book](14-opening-book.md) | The solved first 6 plies, how the book is made and used |
 
 ## Reading paths
 
 - **Everything:** read the chapters in order.
-- **Just the search:** 01, 02, 03, 05, 06, 07, 08, 09.
+- **Just the search:** 01, 02, 03, 05, 06, 07, 08, 09, 14.
 - **Tuning the engine:** 05, 06, 07, 09, 10.
 - **Changing the app:** 01, 10, 11.
 

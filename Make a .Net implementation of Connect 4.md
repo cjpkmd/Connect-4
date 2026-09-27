@@ -246,8 +246,8 @@ Side result: positions after 8 plies are solved in 0.5 s on average (max 11 s), 
 **Engine and app integration**
 
 - `Connect4.Engine/Book/OpeningBook`: `Load(Stream)`, `Default` (the embedded book), `Depth`, `TryGetScore(Position, out int score)`, `TryGetMove(Position, Random, out int column, out int score)`.
-- `SearchEngine.Search`: if the book is on and `position.Moves < book.Depth`, it returns the book move at once: `ScoreKind.Exact`, the score converted with `Scores.FromSolver`, depth 0, 0 nodes, and a new flag `FromBook` in `SearchResult` and `SearchInfo`. The analysis panel shows "Book" and the exact result. The book is used in all three time modes; no time is spent.
-- `SearchLimits.UseBook` (default true) and `GameSettings.UseOpeningBook` (default true), with an "Use opening book" check box in the Settings dialog (WPF and web). Search tests that need the real search set it to false.
+- `SearchEngine.Search`: if the book is on and `position.Moves < book.Depth`, it returns the book move at once: `ScoreKind.Exact`, the score converted with `Scores.FromSolver`, depth 0, 0 nodes, and a new flag `FromBook` in `SearchResult` (no progress report is sent). The analysis panel shows "book" and the exact result. The book is used in all three time modes; no time is spent. `SearchEngine` takes the book as an optional constructor parameter (default `OpeningBook.Default`).
+- `SearchLimits.UseBook` (default true) and `GameSettings.UseOpeningBook` (default true), with an "Use opening book" check box in the Settings dialog (WPF and web). Search tests that need the real search use an empty book (or `UseBook = false`).
 - The solver does not use the book (it only runs near the end of the game), so the slow `Test_L1_*` tests are not faster.
 
 ## 5. Application features

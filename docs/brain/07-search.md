@@ -19,7 +19,7 @@ Scores are from the side to move ([Scores.cs](../../Connect4.Net/Connect4.Engine
 
 Because $n$ is the absolute move number, a faster win scores higher, and the score of a position does not depend on where the search started, so it can be stored in the hash table as it is. `Scores.IsDecided(score)` is true beyond ±1 000; the app shows such scores as "Red wins in 3 moves".
 
-`SearchResult` returns the move (0-based column), the score, the `ScoreKind` (`None`, `Heuristic`, `Exact`), the depth, the nodes, the time and the expected line of play (the principal variation, read from the hash table).
+`SearchResult` returns the move (0-based column), the score, the `ScoreKind` (`None`, `Heuristic`, `Exact`), the depth, the nodes, the time, the expected line of play (the principal variation, read from the hash table) and `FromBook`, which is true for a move from the opening book (chapter 14).
 
 ## Search as a whole
 
@@ -27,7 +27,9 @@ Because $n$ is the absolute move number, a faster win scores higher, and the sco
 
 ```mermaid
 flowchart TD
-    S["Search"] --> W{"Winning move?"}
+    S["Search"] --> B{"In the opening book?"}
+    B -- "yes" --> RB["Best book move, Exact"]
+    B -- "no" --> W{"Winning move?"}
     W -- "yes" --> RW["Play it, Exact"]
     W -- "no" --> N{"Non-losing moves"}
     N -- "none" --> RL["Any move, Exact loss"]

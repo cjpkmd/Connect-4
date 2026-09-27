@@ -5,9 +5,9 @@ using Connect4.Engine;
 namespace Connect4.Web.Worker;
 
 // Messages between the page and the engine worker; plain values only, so ticks stay exact.
-internal sealed record MoveRequest(int[] Moves, TimeControlMode Mode, int Depth, long TimeTicks, int EndgameThreshold);
+internal sealed record MoveRequest(int[] Moves, TimeControlMode Mode, int Depth, long TimeTicks, int EndgameThreshold, bool UseBook);
 
-internal sealed record MoveResponse(int Column, int Score, ScoreKind Kind, int Depth, long Nodes, long ElapsedTicks, int[] Line);
+internal sealed record MoveResponse(int Column, int Score, ScoreKind Kind, int Depth, long Nodes, long ElapsedTicks, int[] Line, bool FromBook);
 
 internal sealed record ProgressReport(int Depth, int Column, int BestColumn, int Score, ScoreKind Kind, long Nodes, long ElapsedTicks, int[] Line, bool Solving);
 
@@ -19,7 +19,7 @@ internal sealed partial class EngineProtocolJson : JsonSerializerContext;
 internal static class EngineProtocol
 {
     public static string WriteRequest(IReadOnlyList<int> moves, SearchLimits limits) => JsonSerializer.Serialize(
-        new MoveRequest([.. moves], limits.Mode, limits.Depth, limits.Time.Ticks, limits.EndgameThreshold),
+        new MoveRequest([.. moves], limits.Mode, limits.Depth, limits.Time.Ticks, limits.EndgameThreshold, limits.UseBook),
         EngineProtocolJson.Default.MoveRequest);
 
     public static (Game Game, SearchLimits Limits) ReadRequest(string json)
@@ -39,11 +39,11 @@ internal static class EngineProtocol
             TimeControlMode.TimePerGame => SearchLimits.TimePerGame(time),
             _ => SearchLimits.Solve,
         };
-        return (game, limits with { EndgameThreshold = request.EndgameThreshold });
+        return (game, limits with { EndgameThreshold = request.EndgameThreshold, UseBook = request.UseBook });
     }
 
     public static string WriteResult(SearchResult result) => JsonSerializer.Serialize(
-        new MoveResponse(result.Column, result.Score, result.Kind, result.Depth, result.Nodes, result.Elapsed.Ticks, [.. result.PrincipalVariation]),
+        new MoveResponse(result.Column, result.Score, result.Kind, result.Depth, result.Nodes, result.Elapsed.Ticks, [.. result.PrincipalVariation], result.FromBook),
         EngineProtocolJson.Default.MoveResponse);
 
     public static SearchResult ReadResult(string json)
@@ -51,7 +51,7 @@ internal static class EngineProtocol
         MoveResponse response = JsonSerializer.Deserialize(json, EngineProtocolJson.Default.MoveResponse)!;
         return new SearchResult(
             response.Column, response.Score, response.Kind, response.Depth, response.Nodes,
-            TimeSpan.FromTicks(response.ElapsedTicks), response.Line);
+            TimeSpan.FromTicks(response.ElapsedTicks), response.Line, response.FromBook);
     }
 
     public static string WriteProgress(SearchInfo info) => JsonSerializer.Serialize(

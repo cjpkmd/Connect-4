@@ -10,4 +10,8 @@
     <InternalsVisibleTo Include="Connect4.Engine.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Book\OpeningBook.txt" LogicalName="Connect4.Engine.Book.OpeningBook.txt" />
+  </ItemGroup>
+
 </Project>

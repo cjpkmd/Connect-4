@@ -5,8 +5,10 @@
 | Term | Meaning |
 |---|---|
 | **Alpha-beta** | A minimax search that skips moves that cannot change the result, using a window (α, β) (chapter 07). |
+| **Back-up** | Working out the score of a position from the scores of its children by negamax; used to make the opening book (chapter 14). |
 | **Bitboard** | A 64-bit number with one bit per cell (chapter 02). |
 | **Bound** | What a hash table entry says about the score: exact, at least (lower) or at most (upper) the value (chapter 08). |
+| **Canonical key** | The same key for a position and its mirror image: the smaller of the two keys (chapter 02). |
 | **Column order** | The order 3, 2, 4, 1, 5, 0, 6 (0-based) in which equal moves are searched (chapter 06). |
 | **Cutoff** | Stopping the search of a node because a move reached β. |
 | **Decided score** | A score beyond ±1 000: a proven win or loss. |
@@ -19,11 +21,13 @@
 | **Hard limit** | The time at which the search stops at once (chapter 10). |
 | **Iterative deepening** | Searching depth 1, 2, 3, … until a limit is reached. |
 | **Key** | The unique 49-bit number of a position, `Current + Mask` (chapter 02). |
+| **Leaf** | A position in the opening book with the most discs (6); only these are solved (chapter 14). |
 | **Move Now** | Stop the computer and play the best move found so far. |
 | **Negamax** | Minimax written so that every score is from the side to move: a position's score is the maximum of the negated scores after its moves. |
 | **Node** | A position visited by the search. |
 | **Non-losing move** | A move after which the opponent cannot win at once (chapter 03). |
 | **Null window** | A window (α, α + 1) that only answers "better than α or not?". |
+| **Opening book** | The stored exact scores of all positions of the first 6 plies; the computer plays from it at once (chapter 14). |
 | **Parity (odd/even rows)** | Red's threats on rows 1, 3, 5 and Yellow's on rows 2, 4, 6 are the dangerous ones late in the game (chapter 05). |
 | **Perft** | Counting the move sequences of a given length, to test move generation. |
 | **Ply** | One move by one side. |
@@ -31,6 +35,7 @@
 | **PVS** | Principal variation search: the first move with the full window, the others with a null window first. |
 | **Soft limit** | The time after which no new depth is started (chapter 10). |
 | **Stacked threats** | Two threats of the same player on top of each other in one column. |
+| **Strong solve** | A solve that finds the exact score, including how many moves the win or loss takes (chapter 09). |
 | **Threat** | An empty cell where a player's disc would complete a four. |
 | **Transposition** | The same position reached by different move orders. |
 | **Transposition table** | The hash table that remembers positions already searched (chapter 08). |

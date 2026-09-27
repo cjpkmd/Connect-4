@@ -22,6 +22,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <TextBlock Grid.ColumnSpan="3" Margin="0,0,0,12" Text="How long may the computer think?" />
@@ -59,7 +60,10 @@
         <TextBlock Grid.Row="5" Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Center"
                    Text="{Binding EndgameThreshold, StringFormat={}{0} cells}" />
 
-        <StackPanel Grid.Row="6" Grid.ColumnSpan="3" Margin="0,16,0,0" Orientation="Horizontal" HorizontalAlignment="Right">
+        <CheckBox Grid.Row="6" Grid.ColumnSpan="3" Margin="0,16,0,0" Content="Use opening book (plays the first 6 plies at once and perfectly)"
+                  IsChecked="{Binding UseOpeningBook}" />
+
+        <StackPanel Grid.Row="7" Grid.ColumnSpan="3" Margin="0,16,0,0" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Width="80" Content="OK" IsDefault="True" Click="OnOk" />
             <Button Width="80" Margin="8,0,0,0" Content="Cancel" IsCancel="True" />
         </StackPanel>

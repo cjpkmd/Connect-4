@@ -1,13 +1,15 @@
 using System.Diagnostics;
 using Connect4.Engine;
+using Connect4.Engine.Book;
 using Connect4.Engine.Endgame;
 
 namespace Connect4.Engine.Tests;
 
 public class SearchEngineTests
 {
+    // These tests are about the search, so the opening book is left out.
     private static SearchEngine NewEngine(int seed = 1) =>
-        new(hashLogSize: 16, endgameLogSize: EndgameTable.MinLogSize, random: new Random(seed));
+        new(hashLogSize: 16, endgameLogSize: EndgameTable.MinLogSize, random: new Random(seed), openingBook: OpeningBook.FromLines([]));
 
     [Fact]
     public void WinningMove_IsPlayedAtOnce()

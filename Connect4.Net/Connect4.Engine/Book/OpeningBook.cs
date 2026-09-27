@@ -7,6 +7,9 @@ public sealed class OpeningBook
 {
     private const int ScoreBits = 8;
     private const int ScoreOffset = 64;
+    private const string ResourceName = "Connect4.Engine.Book.OpeningBook.txt";
+
+    private static readonly Lazy<OpeningBook> s_default = new(LoadDefault);
 
     // CanonicalKey << ScoreBits | (score + ScoreOffset), sorted.
     private readonly ulong[] _entries;
@@ -16,6 +19,9 @@ public sealed class OpeningBook
         _entries = entries;
         Depth = depth;
     }
+
+    /// <summary>The book built into the engine (Book/OpeningBook.txt), loaded the first time it is used.</summary>
+    public static OpeningBook Default => s_default.Value;
 
     /// <summary>The largest number of discs of a book position; −1 for an empty book.</summary>
     public int Depth { get; }
@@ -59,6 +65,13 @@ public sealed class OpeningBook
         }
 
         return new OpeningBook([.. unique], depth);
+    }
+
+    private static OpeningBook LoadDefault()
+    {
+        using Stream stream = typeof(OpeningBook).Assembly.GetManifestResourceStream(ResourceName)
+            ?? throw new InvalidOperationException($"The resource {ResourceName} is missing.");
+        return Load(stream);
     }
 
     public bool TryGetScore(Position position, out int score)

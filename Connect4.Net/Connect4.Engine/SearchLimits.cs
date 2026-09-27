@@ -54,6 +54,9 @@ public sealed record SearchLimits
         }
     }
 
+    /// <summary>Play a book move when the position is in the opening book.</summary>
+    public bool UseBook { get; init; } = true;
+
     public static SearchLimits FixedDepth(int plies)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(plies, 1);

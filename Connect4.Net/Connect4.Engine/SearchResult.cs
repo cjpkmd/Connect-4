@@ -29,6 +29,7 @@ public sealed record SearchInfo(
 
 /// <param name="Column">The chosen move (0-based).</param>
 /// <param name="Score">From the side to move.</param>
+/// <param name="FromBook">The move and its exact score come from the opening book; nothing was searched.</param>
 public sealed record SearchResult(
     int Column,
     int Score,
@@ -36,4 +37,5 @@ public sealed record SearchResult(
     int Depth,
     long Nodes,
     TimeSpan Elapsed,
-    IReadOnlyList<int> PrincipalVariation);
+    IReadOnlyList<int> PrincipalVariation,
+    bool FromBook = false);

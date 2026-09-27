@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Connect4.Engine.Book;
 using Connect4.Engine.Endgame;
 using Connect4.Engine.Evaluation;
 using Connect4.Engine.Search;
@@ -9,7 +10,8 @@ namespace Connect4.Engine;
 /// Iterative deepening alpha-beta search (principal variation search) with a hash table and the
 /// connect4-master move generation and ordering, stopped by a depth or time limit (Stello design).
 /// Positions at the horizon are scored by the <see cref="Evaluator"/>. Near the end of the game the exact
-/// <see cref="EndgameSolver"/> is tried. An instance runs one search at a time.
+/// <see cref="EndgameSolver"/> is tried; in the opening the move comes from the <see cref="OpeningBook"/>.
+/// An instance runs one search at a time.
 /// </summary>
 public sealed class SearchEngine
 {
@@ -24,6 +26,7 @@ public sealed class SearchEngine
     private readonly TranspositionTable _table;
     private readonly int _endgameLogSize;
     private readonly Evaluator _evaluator;
+    private readonly OpeningBook _book;
     private readonly Random _random;
     private readonly Stopwatch _clock = new();
     private EndgameSolver? _endgame;
@@ -37,12 +40,14 @@ public sealed class SearchEngine
     /// <param name="hashLogSize">The search hash table has 2^hashLogSize entries of 8 bytes (24 = 128 MiB).</param>
     /// <param name="endgameLogSize">Size of the endgame solver's table (24 ≈ 84 MB); allocated the first time the solver runs.</param>
     /// <param name="random">Picks among equally good moves; seed it for repeatable games.</param>
+    /// <param name="openingBook">Default: <see cref="OpeningBook.Default"/>.</param>
     /// <remarks>A table that cannot be allocated gets 2^<see cref="FallbackLogSize"/> entries instead.</remarks>
     public SearchEngine(
         int hashLogSize = TranspositionTable.DefaultLogSize,
         int endgameLogSize = EndgameTable.DefaultLogSize,
         Evaluator? evaluator = null,
-        Random? random = null)
+        Random? random = null,
+        OpeningBook? openingBook = null)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(endgameLogSize, EndgameTable.MinLogSize);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(endgameLogSize, EndgameTable.MaxLogSize);
@@ -53,6 +58,7 @@ public sealed class SearchEngine
         _endgameLogSize = endgameLogSize;
         _evaluator = evaluator ?? Evaluator.Default;
         _random = random ?? new Random();
+        _book = openingBook ?? OpeningBook.Default;
     }
 
     /// <summary>True when a table got the fallback size because the requested size could not be allocated.</summary>
@@ -84,6 +90,13 @@ public sealed class SearchEngine
         _moveNow = moveNowToken;
         _progress = progress;
         _table.NewSearch();
+
+        if (limits.UseBook && _book.TryGetBackedUpScore(position, out int bookScore, out int bookColumns))
+        {
+            int[] columns = [.. Enumerable.Range(0, Position.Width).Where(c => (bookColumns & 1 << c) != 0)];
+            var book = new Best(columns, Scores.FromSolver(bookScore, position), ScoreKind.Exact, 0, Final: true, Solved: true);
+            return Result(position, book, fromBook: true);
+        }
 
         int[] winning = [.. Enumerable.Range(0, Position.Width).Where(c => position.CanPlay(c) && position.IsWinningMove(c))];
         if (winning.Length > 0)
@@ -411,11 +424,11 @@ public sealed class SearchEngine
             depth, column, bestColumn, score, kind, _nodes, _clock.Elapsed, PrincipalVariation(position, bestColumn), solving));
     }
 
-    private SearchResult Result(Position position, Best best)
+    private SearchResult Result(Position position, Best best, bool fromBook = false)
     {
         int column = best.Columns[_random.Next(best.Columns.Length)];
         IReadOnlyList<int> line = best.Solved ? [column] : PrincipalVariation(position, column);
-        return new SearchResult(column, best.Score, best.Kind, best.Depth, _nodes, _clock.Elapsed, line);
+        return new SearchResult(column, best.Score, best.Kind, best.Depth, _nodes, _clock.Elapsed, line, fromBook);
     }
 
     /// <param name="Columns">All moves with the best score; one is picked at random.</param>

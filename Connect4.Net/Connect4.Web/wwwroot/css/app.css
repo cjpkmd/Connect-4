@@ -479,6 +479,11 @@ button {
     color: #555;
 }
 
+.settings-book {
+    grid-column: 1 / -1;
+    margin-top: 0.75rem;
+}
+
 /* From the Blazor template */
 
 #blazor-error-ui {

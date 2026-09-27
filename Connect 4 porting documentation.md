@@ -2,7 +2,7 @@
 
 This document describes, phase by phase, how the Connect 4 program was built: which parts were ported from Pascal Pons' C++ solver (`connect4-master/`, AGPL-3.0; a private project, so the licence is not an issue), which were taken over from Stello (the author's Othello program), and which are new. For each part it says whether it is a **1:1 port**, **changed**, or **new**, and why.
 
-The goal of the brain (from the specification): connect4-master is used as a fast search core — bitboard, move generation, threat detection, move ordering — and its exact solver is used near the end of the game. The move itself is chosen as in Stello: iterative deepening alpha-beta, stopped by a depth or time limit, with a heuristic evaluation at the horizon. There is no opening book.
+The goal of the brain (from the specification): connect4-master is used as a fast search core — bitboard, move generation, threat detection, move ordering — and its exact solver is used near the end of the game. The move itself is chosen as in Stello: iterative deepening alpha-beta, stopped by a depth or time limit, with a heuristic evaluation at the horizon. The first 6 plies come from a small opening book of solved positions (phases 11 and 12).
 
 The engine is described in detail in [docs/brain](docs/brain/README.md).
 
@@ -19,8 +19,8 @@ The engine is described in detail in [docs/brain](docs/brain/README.md).
 | (none) | `Evaluation/Evaluator`, `EvaluationWeights` | 4 | New |
 | (none; Stello `SearchEngine`) | `SearchEngine`, `Search/TranspositionTable`, `Search/TimeControl`, `SearchLimits`, `Scores` | 5 | New, Stello design |
 | (none; Stello `ComputerPlayer`) | `ComputerPlayer` | 6 | New, without a book |
-| `OpeningBook.hpp`, `generator.cpp`, `key3` | — | — | Not ported: no opening book |
-| `main.cpp` (command line) | — | — | Not ported: no tools project yet |
+| `OpeningBook.hpp`, `generator.cpp`, `key3` | `Book/OpeningBook`, `Book/BookBuilder`, `Book/BookFile`, `Position.Mirror`/`CanonicalKey`, `Connect4.Tools` | 11, 12 | Changed: same pipeline, full-width book with backed-up scores, text file, used by the search |
+| `main.cpp` (command line) | — | — | Not ported: `Connect4.Tools` only makes the book so far |
 | (Stello.App, Stello.Net, Stello.Web) | `Connect4.App`, `Connect4.WPF`, `Connect4.Web` | 7–9 | New, Stello design |
 
 ---
@@ -46,7 +46,7 @@ The engine is described in detail in [docs/brain](docs/brain/README.md).
 - Added for the app: the cell indexer, `Discs(player)`, `WinningCells(player)`, `FindFours` (the winning line), `ToString`, and `FromMoves`, which throws a `FormatException` instead of silently stopping at an invalid move.
 - `Game` and `GameRecordFormat` are new: the history with undo/redo and the winner (Stello's `Game`), and the `4453` text format of connect4-master's input.
 
-**Assessment:** 1:1 port of the bitboard code; changed only where C# makes it simpler (immutable struct, exceptions). `key3` was not ported, because it is only used by the opening book.
+**Assessment:** 1:1 port of the bitboard code; changed only where C# makes it simpler (immutable struct, exceptions). `key3` was not ported; the opening book got `Mirror` and `CanonicalKey` in phase 11 instead.
 
 **Tests:** 1 500 random games compared with a naive grid board (`ReferenceBoard`), perft 1–8, all 6 000 test positions played.
 
@@ -137,8 +137,42 @@ The engine is described in detail in [docs/brain](docs/brain/README.md).
 - This document.
 - A GitHub Actions workflow (`.github/workflows/azure-static-web-apps.yml`) that runs the engine tests, publishes the web app with AOT and deploys it to Azure Static Web Apps on every push to `main` that changes the web app, the shared code, the images or the docs.
 
+---
+
+## Phase 11 – Opening book generator
+
+### C++
+
+- `generator <depth>` (`explore`) prints every position up to the depth once, mirror images once by `key3` (a base-3 key that is the same for a position and its mirror), leaving out games that have ended.
+- The positions are solved outside the program. `generator` without a depth reads the lines `moves score` back into a `TranspositionTable` of $2^{23}$ entries with partial keys (positions up to 14 plies) and saves it as `7x6.book` (`OpeningBook::save`: a header, then the raw key and value arrays).
+- `Solver::solve` asks the book first.
+
+### C#
+
+- `Position.Mirror()` swaps the 7-bit column groups; `CanonicalKey` is the smaller of `Key` and `Mirror().Key`. This replaces `key3`.
+- `BookBuilder.Enumerate` is `explore` (breadth first, sorted). New: only the leaves (exactly *depth* discs) are solved, and `BookBuilder.BackUp` works out the shallower scores by negamax from the children, so the slow solves near the empty board are not needed.
+- `BookFile`: a text file with one `moves score` line per position (the same lines `generator` reads), with `#` comments, instead of the binary hash-table dump.
+- `OpeningBook`: a sorted `ulong[]` of `CanonicalKey << 8 | (score + 64)` with binary search instead of a hash table; `TryGetScore` and `TryGetMove` (the best child, random among equal ones).
+- `Connect4.Tools book generate` solves the leaves on several threads, one `EndgameSolver` per thread, and appends every result to a `.partial` file so a stopped run can continue; `book verify` checks the book.
+
+**Assessment:** Changed. The C++ pipeline (enumerate, solve, store) is kept, but the book is small and full-width, the file is text, and it is used by the search, not the solver.
+
+**Tests:** positions per ply (1, 4, 25, 121, 568, 2 144, 8 231), the back-up against a plain negamax over a fake solver, the file format, lookups and random ties. A depth-1 book made with the real solver has the known first-move scores −2, −1, 0, +1, 0, −1, −2.
+
+---
+
+## Phase 12 – Opening book in the engine and apps
+
+- The depth-6 book was generated on the author's computer: 11 094 positions, 8 231 leaves, 37 minutes with 12 threads (100 KB). It is `Connect4.Engine/Book/OpeningBook.txt`, an embedded resource, read by `OpeningBook.Default` the first time it is used.
+- `SearchEngine.Search` plays the best book move at once when `SearchLimits.UseBook` is on and the position has fewer than 6 discs; `SearchResult.FromBook` marks it, and the analysis panel shows "book".
+- `GameSettings.UseOpeningBook` (default on) with a check box in both Settings dialogs; the web worker protocol passes it on.
+- The About text mentions the book.
+
+**Assessment:** New. The C++ solver does not use this book (it only runs near the end of the game).
+
+**Tests:** the built-in book has the known first-move scores and a consistent back-up, and agrees with every position of at most 6 moves in `Test_L1_R1`–`R3`; the search uses it, picks among equal book moves at random, and searches when the book is off. `book verify` solved a random sample of the book again.
+
 ## Not done
 
-- **Opening book:** not needed with the endgame solver near the end and a fast search at the start; the C++ book code and `key3` are not ported.
-- **Tools project:** benchmarks, engine-against-engine matches for tuning, and a command line like the C++ `main.cpp` are left for later.
+- **Tools project:** benchmarks, engine-against-engine matches for tuning, and a command line like the C++ `main.cpp` are left for later; `Connect4.Tools` only makes the opening book so far.
 - **Tuning:** the evaluation weights are set by hand (phase 4).

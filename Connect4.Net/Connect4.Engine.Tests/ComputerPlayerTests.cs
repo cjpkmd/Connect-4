@@ -1,4 +1,5 @@
 using Connect4.Engine;
+using Connect4.Engine.Book;
 using Connect4.Engine.Endgame;
 
 namespace Connect4.Engine.Tests;
@@ -6,7 +7,8 @@ namespace Connect4.Engine.Tests;
 public class ComputerPlayerTests
 {
     private static ComputerPlayer NewPlayer(int seed = 1) =>
-        new(new SearchEngine(hashLogSize: 16, endgameLogSize: EndgameTable.MinLogSize, random: new Random(seed)));
+        new(new SearchEngine(
+            hashLogSize: 16, endgameLogSize: EndgameTable.MinLogSize, random: new Random(seed), openingBook: OpeningBook.FromLines([])));
 
     [Fact]
     public void ChooseMove_ReturnsAPlayableColumn()

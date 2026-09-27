@@ -13,8 +13,9 @@ public static class AboutInfo
     [
         "Connect 4 is a game for two players on a board with 7 columns and 6 rows. You play against the computer " +
         "or against a friend, and you can see the computer think in the analysis panel.",
-        "Its brain searches ahead with alpha-beta search, a hash table and iterative deepening, and judges positions " +
-        "by their threats and open lines. Near the end of the game it works out the exact result and plays perfectly.",
+        "Its brain plays the first moves from an opening book of solved positions. After that it searches ahead " +
+        "with alpha-beta search, a hash table and iterative deepening, and judges positions by their threats and " +
+        "open lines. Near the end of the game it works out the exact result and plays perfectly.",
         "The search core is a C# port of Pascal Pons' C++ Connect 4 solver. The same brain runs as a Windows program " +
         "(WPF) and in the browser (Blazor WebAssembly).",
     ];

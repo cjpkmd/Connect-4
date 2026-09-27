@@ -3,13 +3,14 @@ using Connect4.Engine;
 
 namespace Connect4.App.Models;
 
-/// <summary>How long the computer may think, as in Stello, plus when the endgame solver is tried.</summary>
+/// <summary>How long the computer may think, as in Stello, plus when the endgame solver is tried and whether the opening book is used.</summary>
 public sealed record GameSettings(
     TimeControlMode Mode,
     int Depth,
     int SecondsPerMove,
     int MinutesPerGame,
-    int EndgameThreshold = SearchLimits.DefaultEndgameThreshold)
+    int EndgameThreshold = SearchLimits.DefaultEndgameThreshold,
+    bool UseOpeningBook = true)
 {
     public const int MaxDepth = 20;
     public const int MaxSecondsPerMove = 60;
@@ -27,7 +28,8 @@ public sealed record GameSettings(
         Math.Clamp(Depth, 1, MaxDepth),
         Math.Clamp(SecondsPerMove, 1, MaxSecondsPerMove),
         Math.Clamp(MinutesPerGame, 1, MaxMinutesPerGame),
-        Math.Clamp(EndgameThreshold, 0, MaxEndgameThreshold));
+        Math.Clamp(EndgameThreshold, 0, MaxEndgameThreshold),
+        UseOpeningBook);
 
     public SearchLimits ToLimits(TimeSpan computerTimeLeft)
     {
@@ -37,6 +39,6 @@ public sealed record GameSettings(
             TimeControlMode.TimePerMove => SearchLimits.TimePerMove(TimeSpan.FromSeconds(SecondsPerMove)),
             _ => SearchLimits.TimePerGame(computerTimeLeft),
         };
-        return limits with { EndgameThreshold = EndgameThreshold };
+        return limits with { EndgameThreshold = EndgameThreshold, UseBook = UseOpeningBook };
     }
 }

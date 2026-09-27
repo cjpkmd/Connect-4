@@ -9,8 +9,9 @@ public sealed class MainViewModelTests
 {
     private const string GameName = "game.txt";
 
-    private static readonly GameSettings QuickSettings = new(TimeControlMode.FixedDepth, 2, 5, 5);
-    private static readonly GameSettings SlowSettings = new(TimeControlMode.TimePerMove, 8, 60, 5);
+    // Without the book, so the computer really searches (a book move is played at once).
+    private static readonly GameSettings QuickSettings = new(TimeControlMode.FixedDepth, 2, 5, 5, UseOpeningBook: false);
+    private static readonly GameSettings SlowSettings = new(TimeControlMode.TimePerMove, 8, 60, 5, UseOpeningBook: false);
 
     private readonly FakeDialogService _dialogs = new();
     private readonly FakeGameFileService _files = new();
@@ -56,6 +57,19 @@ public sealed class MainViewModelTests
         Assert.Equal(Player.Yellow, last.Disc);
         Assert.Equal("2 plies", vm.Analysis.Depth);
         Assert.Equal([Sound.Drop, Sound.Drop], _sounds.Played);
+    }
+
+    [Fact]
+    public async Task Play_WithTheBook_ComputerRepliesFromTheBook()
+    {
+        MainViewModel vm = Create(settings: QuickSettings with { UseOpeningBook = true });
+
+        vm.PlayCommand.Execute(3);
+        await vm.Idle;
+
+        Assert.Equal(2, vm.Game.Ply);
+        Assert.Equal("book", vm.Analysis.Depth);
+        Assert.Equal("Red wins in 20 moves", vm.Analysis.Value);
     }
 
     [Fact]

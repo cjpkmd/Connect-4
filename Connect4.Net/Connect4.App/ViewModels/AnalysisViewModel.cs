@@ -48,7 +48,7 @@ public sealed partial class AnalysisViewModel : ObservableObject
     public void Update(SearchResult result, Position position, TimeSpan elapsed)
     {
         Move = BestMove = FormatColumn(result.Column);
-        Depth = FormatDepth(result.Depth, result.Kind);
+        Depth = result.FromBook ? "book" : FormatDepth(result.Depth, result.Kind);
         Value = FormatScore(result.Score, result.Kind, position);
         Line = FormatLine(result.PrincipalVariation);
         Nodes = result.Nodes.ToString("N0", CultureInfo.CurrentCulture);

@@ -4,7 +4,7 @@ using Connect4.Engine;
 
 namespace Connect4.App.ViewModels;
 
-/// <summary>The settings dialog: Stello's time control plus the endgame threshold.</summary>
+/// <summary>The settings dialog: Stello's time control plus the endgame threshold and the opening book.</summary>
 public sealed partial class SettingsViewModel : ObservableObject
 {
     [ObservableProperty]
@@ -23,6 +23,9 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private int _endgameThreshold;
 
+    [ObservableProperty]
+    private bool _useOpeningBook;
+
     public SettingsViewModel(GameSettings settings)
     {
         Mode = settings.Mode;
@@ -30,6 +33,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         SecondsPerMove = settings.SecondsPerMove;
         MinutesPerGame = settings.MinutesPerGame;
         EndgameThreshold = settings.EndgameThreshold;
+        UseOpeningBook = settings.UseOpeningBook;
     }
 
     public int MaxDepth => GameSettings.MaxDepth;
@@ -59,7 +63,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     }
 
     public GameSettings ToSettings() =>
-        new GameSettings(Mode, Depth, SecondsPerMove, MinutesPerGame, EndgameThreshold).Normalize();
+        new GameSettings(Mode, Depth, SecondsPerMove, MinutesPerGame, EndgameThreshold, UseOpeningBook).Normalize();
 
     private void SelectMode(bool selected, TimeControlMode mode)
     {
