@@ -1,3 +1,5 @@
+using Connect4.Engine.Search;
+
 namespace Connect4.Engine.Endgame;
 
 /// <summary>
@@ -14,10 +16,6 @@ public sealed class EndgameSolver
 
     // Checking the token at every node would cost more than it saves.
     private const long CancellationCheckMask = 0x3FF;
-
-    // Centre columns first: 3, 2, 4, 1, 5, 0, 6 (the C++ comment says 3, 4, 2, ... but the formula gives this).
-    private static readonly int[] ColumnOrder =
-        [.. Enumerable.Range(0, Position.Width).Select(i => Position.Width / 2 + (1 - 2 * (i % 2)) * (i + 1) / 2)];
 
     private readonly EndgameTable _table;
     private CancellationToken _cancellation;
@@ -180,14 +178,7 @@ public sealed class EndgameSolver
         }
 
         var moves = new MoveSorter();
-        for (int i = Position.Width - 1; i >= 0; i--)
-        {
-            ulong move = possible & Position.ColumnMask(ColumnOrder[i]);
-            if (move != 0)
-            {
-                moves.Add(move, position.MoveScore(move));
-            }
-        }
+        MoveOrdering.Add(ref moves, position, possible);
 
         for (ulong next = moves.GetNext(); next != 0; next = moves.GetNext())
         {

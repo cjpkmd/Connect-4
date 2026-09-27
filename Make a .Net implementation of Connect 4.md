@@ -110,7 +110,7 @@ flowchart LR
 1. The heuristic iterative deepening runs first, as normal, and always gives a move.
 2. When the solver runs:
    - **Seconds per move / minutes per game:** if the number of empty cells is at most the **endgame threshold** and time is left before the hard limit. The solver gets the remaining time as deadline.
-   - **Fixed depth:** if the number of empty cells is at most the depth setting. No time cap (only Move Now stops it).
+   - **Fixed depth:** if the number of empty cells is at most the depth setting. No time cap (only Move Now stops it). The heuristic search before it is limited to 8 plies, only to have a move if Move Now stops the solver.
 3. If it finishes, its exact result is used: the best move and an exact score. If it runs out of time or Move Now is pressed, the heuristic result from step 1 is used.
 4. Once a position is solved, later moves in the same game are usually solved at once (the solver's table is kept between moves).
 
@@ -122,7 +122,8 @@ The C++ solver returns one score for the position, not a move. The best move is 
 
 - Inside the engine, scores are from the side to move (negamax).
 - Heuristic score range, e.g. −1000…1000.
-- Win/loss scores outside that range: `Win − ply`, so a faster win scores higher (Stello uses ±32600 in the same way).
+- Win/loss scores outside that range: `Win (10000) − number of discs on the board after the winning move`, so a faster win scores higher (Stello uses ±32600 in the same way). Because the move number is absolute, the score of a position does not depend on the search root and can be stored in the hash table as it is.
+- A decided score is only final (no deeper iteration needed) once the search depth reaches the winning move; before that a faster win could still exist behind a forced-move extension.
 - A win/loss found by the search is exact (`ScoreKind.Exact`) even at a limited depth.
 - `EndgameSolver` uses the C++ convention (−18…18, 22 − number of the winner's own disc). It is converted to the engine's win scores. The test files use the C++ convention.
 - UI: the heuristic score is shown from **Red's view** (positive = good for Red); exact results as "Red wins in N moves" / "Yellow wins in N moves" / "Draw".
@@ -169,7 +170,7 @@ Weights are tuned by hand (`EvaluationWeights`). Engine-vs-engine tuning can com
   | Total | | | ≈ 218 MB |
 
   Without packing (Stello's record struct with a `ulong` key is 16 bytes with padding), the search table would take 256 MiB.
-- Both sizes are constructor parameters. Tests use small tables (e.g. 2^16), because clearing a large table for every test position costs more than the search.
+- Both sizes are constructor parameters (search table 2^16–2^26, endgame table 2^17–2^27). Tests use small tables, because clearing a large table for every test position costs more than the search.
 - Browser: if the allocation fails (e.g. on a phone), the Web Worker falls back to 2^20 entries per table.
 - The heuristic table is cleared at New Game; both tables are kept between moves in the same game.
 
