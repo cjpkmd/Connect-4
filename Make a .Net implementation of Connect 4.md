@@ -131,18 +131,19 @@ The C++ solver returns one score for the position, not a move. The best move is 
 
 connect4-master has no evaluation function (it always searches to the end). Terms, all computed with bitboards:
 
-| Term | Idea |
-|------|------|
-| Threats | Number of empty cells that complete a four for each player (`WinningCells`). The strongest term. |
-| Odd/even threats (zugzwang) | Red (first player) profits from threats on odd rows (1, 3, 5 counted from the bottom), Yellow from even rows. Near the end of the game this decides most games. |
-| Stacked / shared threats | Two threats on top of each other in one column usually win. A cell that is a threat for both players. |
-| Open lines | Lines of 4 cells with only one colour: count lines with 2 and 3 discs, weighted. |
-| Centre | Cell weights by the number of possible lines through each cell (centre column highest). |
-| Tempo | Small bonus for the side to move (optional). |
+| Term | Idea | Default weight |
+|------|------|----------------|
+| Threats | Number of empty cells that complete a four for each player (`WinningCells`). | 30 per threat |
+| Odd/even threats (zugzwang) | Red (first player) profits from threats on odd rows (1, 3, 5 counted from the bottom), Yellow from even rows. A cell that is a threat for both players only gives this bonus to the player whose good row it is on. | +20 per threat on a good row |
+| Stacked threats | Two threats of the same player on top of each other in one column usually win. | 40 per pair |
+| Open lines | Lines of 4 cells with only one colour: count lines with 2 and 3 discs. | 4 / 6 per line |
+| Centre | Cell weights by the number of lines of four through each cell (3 in the corners, 13 in the centre). | 1 × cell weight per disc |
 
-The evaluation must be symmetric: the mirrored position gives the same score, and swapping colours negates it.
+The score is clamped to ±1000. No tempo term.
 
-Weights are tuned by hand. Engine-vs-engine tuning can come later with `Connect4.Tools`.
+The evaluation is symmetric: the mirrored position gives the same score, and swapping colours negates it except for the odd/even term (which depends on who moved first).
+
+Weights are tuned by hand (`EvaluationWeights`). Engine-vs-engine tuning can come later with `Connect4.Tools`.
 
 ### 4.6 Transposition tables
 
