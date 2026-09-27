@@ -7,7 +7,7 @@ public static class AboutInfo
 
     public const string Version = "Connect 4 Version 1.0";
 
-    public const string PictureCaption = "Claus Pedersen – assisted Opus 5.5 making a Connect 4 in C# in 2026";
+    public const string PictureCaption = "Claus Pedersen – It-architect with a passion for AI and computer games. Connect 4 was written using Opus 5.5 in 2026";
 
     public static IReadOnlyList<string> Paragraphs { get; } =
     [

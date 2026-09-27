@@ -6,7 +6,7 @@ The project creates a WPF application and a Blazor web app, similar to the Stell
 
 The Connect 4 brain is based on the C++ code in `connect4-master`, translated to a modern C# structure.
 
-**Goal of the brain:** connect4-master is used as a fast search core (bitboard, move generation, threat detection, move ordering). It is *not* the goal to solve the game on every move. As in Stello, the search is iterative deepening alpha-beta that stops on a depth or time limit, and a heuristic evaluation function scores the positions at the search horizon. When there is time left near the end of the game, the ported C++ solver finds the exact result (like Stello's endgame solver). There is no opening book.
+**Goal of the brain:** connect4-master is used as a fast search core (bitboard, move generation, threat detection, move ordering). It is *not* the goal to solve the game on every move. As in Stello, the search is iterative deepening alpha-beta that stops on a depth or time limit, and a heuristic evaluation function scores the positions at the search horizon. When there is time left near the end of the game, the ported C++ solver finds the exact result (like Stello's endgame solver). The first plies are played from a small opening book of exactly solved positions (section 4.9), made by a generator in `Connect4.Tools`.
 
 This is a private project, so licensing (connect4-master is AGPL-3.0) is not an issue.
 
@@ -41,9 +41,9 @@ Mirror Stello's layout. The solution is `Connect4.Net/Connect4.Net.slnx` with th
 | `Connect4.Engine.Tests` | xUnit | net10.0 | `Stello.Engine.Tests` |
 | `Connect4.App.Tests` | xUnit, view model tests with fake services | net10.0-windows | `Stello.Net.Tests` |
 
-Later (not at the start): `Connect4.Tools` console app for benchmarks, engine-vs-engine matches and comparison with the C++ program.
+Added in phase 11: `Connect4.Tools` console app (net10.0), first with the opening book generator (4.9). Later: benchmarks, engine-vs-engine matches and comparison with the C++ program. The book logic that can be tested (enumeration, back-up, file format) lives in `Connect4.Engine/Book`; the tool is a thin command line around it (arguments, worker threads, files).
 
-References: `WPF` → `App`, `Engine`; `Web` → `App`, `Engine`; `App` → `Engine`.
+References: `WPF` → `App`, `Engine`; `Web` → `App`, `Engine`; `App` → `Engine`; `Tools` → `Engine`.
 
 Common settings as in Stello: nullable enabled, implicit usings, no static global state in the engine.
 
@@ -82,11 +82,12 @@ flowchart LR
 | `possibleNonLosingMoves` | `NonLosingMoves` | Removes moves that let the opponent win at once. If the opponent has two immediate threats, the position is lost. |
 | `moveScore`, `MoveSorter`, `columnOrder` (3,2,4,1,5,0,6) | `MoveOrdering` | TT best move first (from Stello), then C++ order. |
 | `popcount` loop | `BitOperations.PopCount` | |
-| `key()` | `Key` | Transposition table key. `key3()` (mirror key for the book) is not needed without a book. |
+| `key()` | `Key` | Transposition table key. |
+| `key3()` (base-3 key, the same for a position and its mirror) | `Mirror()`, `CanonicalKey` | Not ported 1:1. `Mirror()` swaps the 7-bit column groups of `Current` and `Mask`; `CanonicalKey = min(Key, Mirror().Key)`. Used by the opening book. |
 | `Solver::solve` / `negamax` | `EndgameSolver` | 1:1 port of the exact solver (null-window loop, alpha-beta, pruning). Added: deadline and `CancellationToken`, so an unfinished solve can be dropped. |
 | `TranspositionTable` (8-bit bound value, prime size) | `EndgameTable` | 1:1 port, used only by `EndgameSolver`. Same size as C++: 2^24 entries (≈ 84 MB), on desktop and in the browser. Allocated the first time the solver runs. |
 | – | `TranspositionTable` (Stello design) | For the heuristic search, which also needs depth, bound type and best move. |
-| `OpeningBook`, `7x6.book`, `generator.cpp` | Not ported | No opening book. |
+| `OpeningBook`, `7x6.book`, `generator.cpp` | `Book/OpeningBook`, `Book/BookBuilder`, `Connect4.Tools book` | Not ported 1:1. The pipeline of `generator.cpp` is kept (list the unique positions, solve them, store the scores), but the book is full-width to a small depth with backed-up scores, is a text file, and is used by `SearchEngine`, not by the solver (4.9). `7x6.book` is not used. |
 | `main.cpp` | Not ported now | Later in `Connect4.Tools`. |
 
 ### 4.2 Search (Stello design)
@@ -180,11 +181,74 @@ Weights are tuned by hand (`EvaluationWeights`). Engine-vs-engine tuning can com
 - Variation: among root moves with *exactly* the same best score, one is picked at random. The random generator can be seeded, so tests are repeatable.
 - To know which moves are equal, the root must search the other moves with a window of "best − 1" instead of a null window above the best score. This costs a little time at the root only.
 - Exact results: a win is always the fastest win (a faster win has a higher score). Only wins of the same length are picked at random. In the same way a lost position plays the slowest loss.
+- Book moves follow the same rule (4.9).
 
 ### 4.8 Speed
 
 - No allocations in the search: `Position` is a struct, move lists on the stack.
 - Node rate is compared with the C++ code later, when `Connect4.Tools` is added.
+
+### 4.9 Opening book
+
+Goal: the computer plays the first plies perfectly and at once, so the weak spots of the evaluation in the opening (e.g. it opens in column 2 at 1 s per move) do not matter. The book is small: exact scores for every position of the first 6 plies, not a large database.
+
+**Ideas found**
+
+- connect4-master `generator.cpp` + `OpeningBook.hpp`: `generator <depth>` prints every position up to the depth once (mirror positions once, via `key3`; games that have ended are skipped). The positions are solved outside the program, and the scored lines `moves score` are read back into a hash table (2^23 entries, partial keys, positions up to 14 plies) saved as `7x6.book`. `Solver::solve` asks the book first.
+- John Tromp's 8-ply database (UCI Machine Learning Repository, "Connect-4" data set, https://archive.ics.uci.edu/dataset/26/connect+4): all 67,557 positions after 8 plies where nobody has won and the next move is not forced, with win / draw / loss for the first player. An independent check for a book of depth 8 or more (sign only).
+- Known values of the first move (Pascal Pons' online solver; confirmed by the measurements below): columns 1–7 score −2, −1, 0, +1, 0, −1, −2 for Red. Only the centre wins, with Red's last disc.
+
+**Design (differs from the C++ book)**
+
+- **Full-width to depth N**: every position with at most N discs, mirror positions stored once.
+- **Only the leaves are solved** (the positions with exactly N discs). The scores of shallower positions are *backed up* by negamax from their children: a winning move gives `(43 − moves) / 2`, otherwise the score is the maximum of −(child score) over the playable columns. This avoids the costly solves of shallow positions: one position after 1 ply takes 40–143 s, after 2 plies about 45 s (measured). A leaf after 6 plies takes 2 s on average.
+- **Strong scores** (C++ convention −18…18), so the computer plays the fastest win or slowest loss and the analysis panel shows "Red wins in N moves" from the first move. A weak solve is not cheaper at the beginning: after 1 ply (`4`), strong took 143 s and weak 153 s.
+- **Book move**: in a position with fewer than N discs, look up all children and play the best (ties at random with the seeded generator, as 4.7). Mirror moves always tie, so e.g. after `44` the replies in columns 3 and 5 are picked at random. A position with exactly N discs has a score in the book but no move; the normal search plays there.
+- "Best variations" therefore means: the computer's own book moves are always best, and every reply of the opponent is covered, including bad ones. A book that only stores the lines of best play would still need exact scores for all alternatives at the computer's turns, which are the costly shallow solves, so it would not be cheaper.
+
+**Measurements on this computer** (i7-12850HX, 16 cores / 24 threads, 32 GB; C# `EndgameSolver` in Release, 2^24 table cleared before every position, strong solve). Leaves: about 100 positions sampled evenly from the real leaf list of each depth.
+
+| Depth N | Positions ≤ N (mirror reduced) | Leaves (N discs) | Mean per leaf | Median | 90 % | Max | CPU time (leaves) | Wall time, 12 workers | Book, binary (8 bytes/entry) |
+|---------|-------------------------------:|-----------------:|--------------:|-------:|-----:|----:|------------------:|----------------------:|-----------------------------:|
+| 5 | 2,863 | 2,144 | 4.4 s ¹ | 4.4 s | – | 10.8 s | ≈ 2.6 h | ≈ 20 min | 23 KB |
+| **6** | **11,094** | **8,231** | **1.94 s** | 0.98 s | 5.0 s | 20.7 s | **≈ 4.4 h** | **≈ 35 min** | **89 KB** |
+| 7 | 38,203 | 27,109 | 0.94 s | 0.63 s | 2.2 s | 7.8 s | ≈ 7.1 h | ≈ 55 min | 306 KB |
+| 8 | 129,498 | 91,295 | 0.53 s | 0.26 s | 1.0 s | 11.4 s | ≈ 13.6 h | ≈ 1.7 h | 1.0 MB |
+| 9 | 399,029 | 269,531 | not measured | | | | | | 3.2 MB |
+
+¹ Depth 5: 12 positions from random games, not an even sample of the leaves (at depth 6 the two methods gave 2.3 s and 1.9 s).
+
+- Unique positions per ply (mirror reduced): 1, 4, 25, 121, 568, 2,144, 8,231, 27,109, 91,295, 269,531 (plies 0–9).
+- Parallel speed-up, measured: 12 solver processes at once each ran 1.5× slower than one alone, so 12 workers give about 8×. With 12 tables of 2^24 entries this uses about 1 GB.
+- The time per position varies by a factor of 100, so the estimates are ±50 %. Keeping each worker's table between leaves (leaves sorted by move string, so neighbours share subtrees) should make it faster; this was not measured.
+
+**Recommendation: depth 6.** The first 6 plies (3 moves for each side) come from the book: 11,094 positions, 89 KB binary or about 110 KB as text, about 4.4 CPU hours, i.e. about 35–45 minutes with 12 workers. That is far below the one-day limit. Depth 8 also fits (13.6 CPU hours, under 2 hours with 12 workers, and even on one core within a day), but the book is 12× larger; the depth is a parameter of the tool, so it can be raised later. Depth 9 and more is larger than wanted.
+
+Side result: positions after 8 plies are solved in 0.5 s on average (max 11 s), so the endgame threshold default of 24 empty cells (4.3) is very cautious. It can be tuned later; that is not part of the book work.
+
+**File format**
+
+- Text, as the `Test positions/` files: one line `<moves> <score>` per position (score from the side to move, C++ convention), sorted by ply and then by moves. Lines starting with `#` are comments; the first line records depth, score type, date and generator version.
+- Stored as `Connect4.Engine/Book/OpeningBook.txt`, an embedded resource of `Connect4.Engine`, so the desktop app and the web worker get it without an extra download. Text is readable, gives useful git diffs, and single lines can be checked on Pascal Pons' online solver.
+- Loaded once (lazily) into a sorted `ulong[]` of `CanonicalKey << 8 | (score + 64)`, looked up with binary search (89 KB in memory, a few milliseconds to load).
+
+**Generator: `Connect4.Tools book`**
+
+- `book generate --depth 6 [--workers N] [--table 24] --out OpeningBook.txt`
+  1. List the unique positions up to the depth (breadth first, mirror reduced, as `generator.cpp explore`).
+  2. Solve the leaves in parallel: one `EndgameSolver` per worker (its own table, kept between leaves), leaves taken from a shared queue in move-string order. Default workers: `Environment.ProcessorCount / 2` (12 here).
+  3. Append each result at once to `OpeningBook.txt.partial`, so a stopped run resumes and skips the solved leaves.
+  4. Back up the shallower scores, write the book, and print statistics: counts, time, and the scores of the empty board and its 7 children.
+  - Progress while running: solved / total, positions per second, estimated time left. Ctrl+C stops cleanly (the partial file is kept).
+- `book verify --book OpeningBook.txt [--sample 200]`: solves random entries directly and compares them (leaves and positions with 3 or more discs; shallower ones are too slow). Checks that every stored shallower score equals the back-up of its children, and that the empty board scores 1 with first moves −2, −1, 0, +1, 0, −1, −2.
+- The enumeration and the back-up take the solve step as a delegate, so the tests can use a fake solver and small depths.
+
+**Engine and app integration**
+
+- `Connect4.Engine/Book/OpeningBook`: `Load(Stream)`, `Default` (the embedded book), `Depth`, `TryGetScore(Position, out int score)`, `TryGetMove(Position, Random, out int column, out int score)`.
+- `SearchEngine.Search`: if the book is on and `position.Moves < book.Depth`, it returns the book move at once: `ScoreKind.Exact`, the score converted with `Scores.FromSolver`, depth 0, 0 nodes, and a new flag `FromBook` in `SearchResult` and `SearchInfo`. The analysis panel shows "Book" and the exact result. The book is used in all three time modes; no time is spent.
+- `SearchLimits.UseBook` (default true) and `GameSettings.UseOpeningBook` (default true), with an "Use opening book" check box in the Settings dialog (WPF and web). Search tests that need the real search set it to false.
+- The solver does not use the book (it only runs near the end of the game), so the slow `Test_L1_*` tests are not faster.
 
 ## 5. Application features
 
@@ -196,9 +260,9 @@ Stello's features and whether they apply to Connect 4:
 | Switch Sides | Yes | Human vs computer: swaps the colours of human and computer. Disabled in human vs human. |
 | Move Now (Ctrl+M) | Yes | Stops the search (or the endgame solve) and plays the best move found. |
 | Undo (Ctrl+Z) / Redo (Ctrl+Y) | Yes | Human vs computer: takes back the computer's reply and the human move, as in Stello. Human vs human: one move. |
-| Settings dialog | Yes | Same as Stello: fixed depth / seconds per move / minutes per game. Plus the endgame threshold. |
-| Analysis panel (Ctrl+A) | Yes | As Stello: depth, score (Red's view), best move, principal variation, nodes, time, "solving" state. No score per column. Empty in human vs human (no search runs). |
-| Add Game to Book, Evaluate Book, Self-play, Stop Learning | No | No opening book. The Book menu is removed. |
+| Settings dialog | Yes | Same as Stello: fixed depth / seconds per move / minutes per game. Plus the endgame threshold and "Use opening book". |
+| Analysis panel (Ctrl+A) | Yes | As Stello: depth, score (Red's view), best move, principal variation, nodes, time, "solving" or "book" state. No score per column. Empty in human vs human (no search runs). |
+| Add Game to Book, Evaluate Book, Self-play, Stop Learning | No | No learning book. The opening book (4.9) is fixed and made by `Connect4.Tools`. The Book menu is removed. |
 | About box | Yes | Same style and picture as Stello; text adapted to Connect 4 (below). |
 | Window placement and settings saved (JSON in AppData / browser local storage) | Yes | |
 | Appearance / themes (web only) | Yes | Copy Stello.Web's `AppearanceStore` and theme settings to Connect4.Web. The WPF app has no themes, as Stello. |
@@ -226,7 +290,7 @@ About box (same layout, style and picture `2026 Claus Pedersen.jpg` as Stello):
 - Title: "About Connect 4". Version: "Connect 4 Version 1.0".
 - Caption: "Claus Pedersen – assisted Opus 5.5 making a Connect 4 in C# in 2026".
 - "Connect 4 is a game for two players on a board with 7 columns and 6 rows. You play against the computer or against a friend, and you can see the computer think in the analysis panel."
-- "Its brain searches ahead with alpha-beta search, a hash table and iterative deepening, and judges positions by their threats and open lines. Near the end of the game it works out the exact result and plays perfectly."
+- "Its brain plays the first moves from an opening book of solved positions. After that it searches ahead with alpha-beta search, a hash table and iterative deepening, and judges positions by their threats and open lines. Near the end of the game it works out the exact result and plays perfectly."
 - "The search core is a C# port of Pascal Pons' C++ Connect 4 solver. The same brain runs as a Windows program (WPF) and in the browser (Blazor WebAssembly)."
 
 ## 6. Blazor web app
@@ -235,7 +299,7 @@ As Stello.Web:
 
 - Blazor WebAssembly standalone, engine runs in a Web Worker via `[JSExport]`, AOT compilation in Release (`wasm-tools` workload).
 - Pages: `/` game, `/docs` and `/docs/{slug}` brain documentation (Markdown → HTML with Markdig), NotFound.
-- Settings and appearance in local storage. No book.
+- Settings and appearance in local storage. The opening book is embedded in the engine assembly (about 110 KB text), so the worker has it without an extra download.
 - Same hash table sizes as desktop (2^24 entries each, ≈ 218 MB in the Web Worker; fallback 2^20, see 4.6).
 - A running search cannot be interrupted inside the worker, so Stop and Move Now terminate the worker (Move Now plays the best move reported so far) and start a new one with empty tables. Time limits work inside the worker because they are checked with a clock, not a timer.
 - Appearance (View menu): Blue, Golden Oak or Reddish Wood board (Stello's wood textures), 3D discs, animated drops.
@@ -254,6 +318,7 @@ Engine:
 - Endgame solver: exact scores for Pascal Pons' test sets in `Test positions/` (see below).
 - Transposition tables: store/lookup, bounds, replacement.
 - Strength: plays against random and greedy players and wins (as Stello's `StrengthTests`).
+- Opening book: `Mirror` and `CanonicalKey`; enumeration counts per ply (1, 4, 25, 121, 568, 2,144, 8,231); back-up with a fake solver; file load/save round trip; the real book: empty board 1 and first moves −2, −1, 0, +1, 0, −1, −2, a sample of leaves re-solved with `EndgameSolver`, `Test_L1_*` lines with at most N moves equal the book, back-up consistency; book move is the best, ties at random with a fixed seed; `UseBook = false` and positions at or beyond the depth use the search.
 
 Test data (`Test positions/`, 6 files × 1000 lines, `<moves> <score>` in the C++ score convention):
 
@@ -287,6 +352,7 @@ As Stello's `docs/brain`, chapters in Markdown, also shown in the web app:
 11. App integration
 12. Glossary
 13. References (Pascal Pons' blog: http://blog.gamesolver.org)
+14. Opening book (added last, so the numbers of the existing chapters stay)
 
 Plus `Connect 4 porting documentation.md` like Stello's: per part, the C++ original, the C# code, and whether it is a 1:1 port or changed.
 
@@ -302,3 +368,5 @@ Plus `Connect 4 porting documentation.md` like Stello's: per part, the C++ origi
 8. WPF UI, including animation, sound and game mode.
 9. Blazor web app, Web Worker, appearance/themes, docs pages.
 10. Documentation, GitHub Actions workflow, Azure Static Web App.
+11. Opening book generator: `Mirror`/`CanonicalKey`, `Connect4.Engine/Book` (enumeration, back-up, file format, `OpeningBook`), `Connect4.Tools` with `book generate` (parallel, resumable) and `book verify`, tests with small depths and a fake solver.
+12. Generate the depth-6 book on this computer (about 35–45 minutes) and verify it. Engine integration (`SearchEngine`, `FromBook`, `UseBook`), the setting in WPF and web, analysis "Book", tests, docs chapter 14, porting documentation, About text.
