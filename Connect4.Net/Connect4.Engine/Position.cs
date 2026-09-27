@@ -59,6 +59,9 @@ public readonly record struct Position
     /// <summary>Unique key of the position on 49 bits (C++: key).</summary>
     public ulong Key => Current + Mask;
 
+    /// <summary>The same key for a position and its mirror image; used by the opening book (C++: key3).</summary>
+    public ulong CanonicalKey => Math.Min(Key, Mirror().Key);
+
     /// <summary>The disc in a cell; column and row are 0-based, row 0 at the bottom.</summary>
     public Player? this[int column, int row]
     {
@@ -112,6 +115,22 @@ public readonly record struct Position
     }
 
     public bool CanPlay(int column) => (Mask & TopMaskColumn(column)) == 0;
+
+    /// <summary>The position with the columns in reverse order.</summary>
+    public Position Mirror() => new(MirrorColumns(Current), MirrorColumns(Mask), Moves);
+
+    private static ulong MirrorColumns(ulong bits)
+    {
+        const int columnBits = Height + 1;
+        ulong mirrored = 0;
+        for (int column = 0; column < Width; column++)
+        {
+            ulong group = (bits >> column * columnBits) & ((1UL << columnBits) - 1);
+            mirrored |= group << (Width - 1 - column) * columnBits;
+        }
+
+        return mirrored;
+    }
 
     /// <exception cref="InvalidOperationException">The column is full.</exception>
     public Position Play(int column)

@@ -58,6 +58,9 @@ dlldata.c
 # Benchmark Results
 BenchmarkDotNet.Artifacts/
 
+# Unfinished opening book runs (Connect4.Tools book generate)
+*.partial
+
 # .NET Core
 project.lock.json
 project.fragment.lock.json

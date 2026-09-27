@@ -240,7 +240,7 @@ Side result: positions after 8 plies are solved in 0.5 s on average (max 11 s), 
   3. Append each result at once to `OpeningBook.txt.partial`, so a stopped run resumes and skips the solved leaves.
   4. Back up the shallower scores, write the book, and print statistics: counts, time, and the scores of the empty board and its 7 children.
   - Progress while running: solved / total, positions per second, estimated time left. Ctrl+C stops cleanly (the partial file is kept).
-- `book verify --book OpeningBook.txt [--sample 200]`: solves random entries directly and compares them (leaves and positions with 3 or more discs; shallower ones are too slow). Checks that every stored shallower score equals the back-up of its children, and that the empty board scores 1 with first moves −2, −1, 0, +1, 0, −1, −2.
+- `book verify --book OpeningBook.txt [--sample 200] [--min-ply 3] [--seed S] [--workers N] [--table 24]`: solves random entries with at least `--min-ply` discs directly and compares them (shallower ones are too slow). Checks that every stored shallower score equals the back-up of its children, and that the empty board scores 1 with first moves −2, −1, 0, +1, 0, −1, −2. Exit code 0 only if everything is correct.
 - The enumeration and the back-up take the solve step as a delegate, so the tests can use a fake solver and small depths.
 
 **Engine and app integration**
@@ -288,7 +288,7 @@ Board UI:
 About box (same layout, style and picture `2026 Claus Pedersen.jpg` as Stello):
 
 - Title: "About Connect 4". Version: "Connect 4 Version 1.0".
-- Caption: "Claus Pedersen – assisted Opus 5.5 making a Connect 4 in C# in 2026".
+- Caption: "Claus Pedersen – It-architect with a passion for AI and computer games. Connect 4 was written using Opus 5.5 in 2026".
 - "Connect 4 is a game for two players on a board with 7 columns and 6 rows. You play against the computer or against a friend, and you can see the computer think in the analysis panel."
 - "Its brain plays the first moves from an opening book of solved positions. After that it searches ahead with alpha-beta search, a hash table and iterative deepening, and judges positions by their threats and open lines. Near the end of the game it works out the exact result and plays perfectly."
 - "The search core is a C# port of Pascal Pons' C++ Connect 4 solver. The same brain runs as a Windows program (WPF) and in the browser (Blazor WebAssembly)."
