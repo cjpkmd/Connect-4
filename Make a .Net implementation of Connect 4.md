@@ -1,18 +1,14 @@
-# We want to make a .Net implementation of the Connect 4 game.
+# Specification: a .NET implementation of Connect 4
 
 ## Scope
 
-The project should create a WPF application and Blazor Web app  similar to the VS Solution Stello found in C:\Udvikling\Privat\Stello
+The project creates a WPF application and a Blazor web app, similar to the Stello solution in `C:\Udvikling\Privat\Stello`, with the same features as Stello except where this specification says otherwise.
 
-The functionality should have the same features like the Stello solution
-
-The Connect 4 brain should be based on the code in connect4-master. This is a C++ project, and it must be translated to a modern c# structure.
+The Connect 4 brain is based on the C++ code in `connect4-master`, translated to a modern C# structure.
 
 **Goal of the brain:** connect4-master is used as a fast search core (bitboard, move generation, threat detection, move ordering). It is *not* the goal to solve the game on every move. As in Stello, the search is iterative deepening alpha-beta that stops on a depth or time limit, and a heuristic evaluation function scores the positions at the search horizon. When there is time left near the end of the game, the ported C++ solver finds the exact result (like Stello's endgame solver). There is no opening book.
 
 This is a private project, so licensing (connect4-master is AGPL-3.0) is not an issue.
-
-Decisions from the questions are in sections 10–12. There are no open questions.
 
 ## 1. Game rules
 
@@ -95,7 +91,7 @@ flowchart LR
 
 ### 4.2 Search (Stello design)
 
-- `SearchEngine`: negamax alpha-beta with iterative deepening (depth 1, 2, 3, …) until the limit is reached. Proposal: principal variation search (null window on non-first moves), as the C++ solver uses null windows.
+- `SearchEngine`: negamax alpha-beta with iterative deepening (depth 1, 2, 3, …) until the limit is reached, as principal variation search (null window on non-first moves).
 - At each node, in this order:
   1. Draw if the board is full.
   2. If the side to move can win at once → win score (no further search).
@@ -110,8 +106,6 @@ flowchart LR
 - The engine is not thread-safe; one search at a time (as Stello).
 
 ### 4.3 Endgame solver
-
-"Use the exact solver when there is time left" is specified as:
 
 1. The heuristic iterative deepening runs first, as normal, and always gives a move.
 2. When the solver runs:
@@ -243,7 +237,7 @@ As Stello.Web:
 - Same hash table sizes as desktop (2^24 entries each, ≈ 218 MB in the Web Worker; fallback 2^20, see 4.6).
 - Sound with HTML audio; the sound files are in `wwwroot/sounds/`.
 - Deployment: Azure Static Web Apps with a GitHub Actions workflow like Stello's, from the `main` branch of https://github.com/cjpkmd/Connect-4.
-  - Manual steps for you (they need your Azure login): create the Static Web App in the Azure portal and add its deployment token to the GitHub repository as the secret `AZURE_STATIC_WEB_APPS_API_TOKEN`. The workflow file is part of the project.
+  - Manual steps for the owner (they need an Azure login): create the Static Web App in the Azure portal and add its deployment token to the GitHub repository as the secret `AZURE_STATIC_WEB_APPS_API_TOKEN`. The workflow file is part of the project.
 
 ## 7. Tests (xUnit, as Stello)
 
@@ -292,7 +286,7 @@ As Stello's `docs/brain`, chapters in Markdown, also shown in the web app:
 
 Plus `Connect 4 porting documentation.md` like Stello's: per part, the C++ original, the C# code, and whether it is a 1:1 port or changed.
 
-## 9. Proposed phases
+## 9. Phases
 
 1. Fix the namespace, create the solution structure.
 2. Engine: `Position`, rules, threats, perft tests.
@@ -304,76 +298,3 @@ Plus `Connect 4 porting documentation.md` like Stello's: per part, the C++ origi
 8. WPF UI, including animation, sound and game mode.
 9. Blazor web app, Web Worker, appearance/themes, docs pages.
 10. Documentation, GitHub Actions workflow, Azure Static Web App.
-
-## 10. Decisions (first round of questions)
-
-- **Q1 Naming:** Change the namespace `Connect_4.WPF` to `Connect4.WPF`? Are the new project names in section 3 OK? 
-Yes, Change the namespace `Connect_4.WPF` to `Connect4.WPF. The new project names are fine.
-- **Q2 Board size:** Fixed 7×6 only?
-Yes.
-- **Q3 Evaluation:** Are the terms in 4.4 what you want, or do you have your own ideas (e.g. from Stello's evaluation style)? Tune by hand only, or also with engine-vs-engine matches?
- The terms in 4.4  are fine
-- **Q4 Endgame solver:** Use the exact C++ solver when few cells are empty (like Stello's endgame solver at ≤ 7 empty squares)? If yes, from how many empty cells (e.g. ≤ 16), or only when there is time left?
-Yes, use the same C++ endgame solver when there is time left. 
-- **Q5 Opening book:** No book, a small fixed book, or a Stello-style learning book (Add Game, Self-play)?
-No book for now
-- **Q6 Easy levels:** Is time control enough, or also "easy" levels with random/weaker moves for beginners?
-For now the same options as Stello
-- **Q7 Variation:** Pick at random among equally good moves, so the computer does not play the same game every time?
-Yes
-- **Q8 Memory:** Transposition table size on desktop and in the browser (proposal 2^20 entries desktop, smaller web)?
-Sounds good
-- **Q9 Tools:** Include `Connect4.Tools` (benchmarks, engine matches, compare with C++)? BenchmarkDotNet?
-Not at the start
-- **Q10 File format:** Plain column sequence (`4453`) in `.txt` or a custom extension? Also copy/paste of the sequence?
-Plain column sequence (`4453`) in `.txt` is fine
-- **Q11 Extra features:** Human vs human, computer vs computer, hint button, disc-drop animation, winning-line highlight, sound, themes, Danish/English UI?
- Human vs human, computer vs computer, hint button, disc-drop animation, winning-line highlight, sound, only English UI
-- **Q12 About box:** Same text, picture and style as Stello, or new content?
-Same text, picture and style as Stello
-- **Q13 Deployment:** Azure Static Web Apps like Stello? Which repository/branch?
-Azure Static Web Apps like Stello. The project should already be connected to the repository https://github.com/cjpkmd/Connect-4 ? It is not yet connected to a Azure Static Web app, but that will be part of the project.
-- **Q14 Test data:** Download Pascal Pons' test sets into the test project to check exact end-game scores?
-I downloaded them and put them in folder "Test positions"
-- **Q15 Colours:** Red/Yellow (classic) or other names/colours?
-Red/Yellow (classic) is fine
-- **Q16 Score display:** Heuristic score from Red's view or from the side to move? Show a score per column (costs extra search time)?
-Heuristic score from Red's view
-
-## 11. Decisions (second round of questions)
-
-- **N1 Endgame solver in Fixed depth mode:** There is no time limit in this mode, so "when there is time left" does not apply. Options: (a) never use the solver in this mode; (b) use it with a fixed time cap (e.g. 1 second) when ≤ `EndgameThreshold` empty cells; (c) use it without a cap when the empty cells ≤ the depth setting.
-Option (c) use it without a cap when the empty cells ≤ the depth setting.
-- **N2 Endgame threshold:** Start trying the solver at ≤ 24 empty cells, and adjust after measuring? Should the threshold be visible in the Settings dialog, or internal only?
-the threshold should be visible in the Settings dialog
-- **N3 Variation:** Random only among moves with *exactly* the same score, or among moves within a small margin (e.g. 5 points) of the best heuristic score? With a margin the games differ more but the play is a little weaker. For exact wins: always the fastest win, or any winning move?
-Random only among moves with *exactly* the same score and For exact wins: always the fastest win
-- **N4 Computer vs computer:** A delay between moves (e.g. a setting 0–5 seconds) so it can be followed? Pause/continue command? Does it start from New Game only, or also from the current position (e.g. set both players to Computer in the middle of a game)?
-Let us drop the computer vs computer mode.
-- **N5 Hint:** Search with the current settings, or a fixed short time (e.g. 1 second)? Show only the column, or also the score? Is the hint available in the web app too?
-Lets drop the hint functionality
-- **N6 Sound files:** Do you have sound files you want to use, or should simple sounds be made (e.g. short generated WAV files)? Sound on by default?
-simple sounds are fine, Sound on by default
-- **N7 About text:** Stello's text is about Othello, so it cannot be used word for word. Is the draft in section 5 OK? Is the version "1.0" right?
-I updated the text in section 5
-- **N8 Score per column:** Q16 did not answer this part. Show a score above each column in the analysis panel (costs extra search time), or only the best move and its score?
-Only show the best move and its score
-- **N9 Web appearance:** Stello.Web has appearance/theme settings (`AppearanceStore`). Copy them for Connect4.Web, or no themes?
-Copy them for Connect4.Web
-- **N10 Slow tests:** Is it OK that the beginning-of-game test sets (`Test_L1_*`) and the full `Test_L2_R2` only run as slow tests (not in every `dotnet test` run)?
-yes. They should only be run when there are a specific need to test them
-- **N11 Switch Sides in other modes:** In human vs human and computer vs computer, should Switch Sides be disabled, or swap the Red/Yellow player settings?
-Switch Sides should be disabled
-
-Also decided: the endgame solver keeps the C++ hash table size (2^24 entries, ≈ 84 MB).
-
-## 12. Decisions (third round of questions)
-
-- **M1 Endgame threshold setting:** Is it right that the threshold is used only in the two time modes, while Fixed depth uses the depth setting (N1)? Or should Fixed depth use the smaller of the two? Is the range 0–42 with default 24 (0 = never) OK?
-the threshold should be used only in the two time modes. the range 0–42 with default 24 (0 = never) si OK
-- **M2 Changing game mode during a game:** Allowed, so the computer takes over the side not played by the human? Or does a new mode only take effect at New Game?
-It is allowed
-- **M3 Analysis panel in human vs human:** No search runs in this mode. Leave the panel empty, or let the engine analyse the position in the background after each move?
-Leave the panel empty
-
-Also decided: the heuristic search hash table is 2^24 entries on desktop and in the browser.
