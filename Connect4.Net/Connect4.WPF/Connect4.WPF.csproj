@@ -14,6 +14,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="..\Images\2026 Claus Pedersen.jpg" Link="Images\ClausPedersen.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="Connect4.App.Tests" />
   </ItemGroup>
 

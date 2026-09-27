@@ -44,6 +44,10 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _title = "";
 
+    /// <summary>The colour a human would drop now; null while the computer thinks or when the game is over.</summary>
+    [ObservableProperty]
+    private Player? _nextDisc;
+
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(MoveNowCommand))]
     private bool _isThinking;
@@ -422,6 +426,7 @@ public sealed partial class MainViewModel : ObservableObject
             Analysis.Clear();
         }
 
+        NextDisc = !_game.IsGameOver && IsHumanToMove ? _game.ToMove : null;
         SidesText = Mode == GameMode.HumanVsComputer ? $"You play {_human}" : "Human vs human";
         TimeSpan left = _computerTimeLeft > TimeSpan.Zero ? _computerTimeLeft : TimeSpan.Zero;
         ClockText = Mode == GameMode.HumanVsComputer && Settings.Mode == TimeControlMode.TimePerGame

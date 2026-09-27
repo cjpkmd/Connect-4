@@ -58,6 +58,32 @@ public sealed class MainViewModelTests
         Assert.Equal([Sound.Drop, Sound.Drop], _sounds.Played);
     }
 
+    [Fact]
+    public async Task NextDisc_IsTheColourAHumanWouldDrop()
+    {
+        MainViewModel vm = Create(GameMode.HumanVsHuman);
+        Assert.Equal(Player.Red, vm.NextDisc);
+
+        vm.PlayCommand.Execute(3);
+        Assert.Equal(Player.Yellow, vm.NextDisc);
+
+        await vm.SetModeCommand.ExecuteAsync(GameMode.HumanVsComputer);
+        await vm.SwitchSidesCommand.ExecuteAsync(null);
+        Assert.Null(vm.NextDisc);
+        await vm.Idle;
+        Assert.Equal(Player.Red, vm.NextDisc);
+    }
+
+    [Fact]
+    public async Task NextDisc_IsNullWhenTheGameIsOver()
+    {
+        MainViewModel vm = await OpenAsync(Create(), "121212");
+
+        vm.PlayCommand.Execute(0);
+
+        Assert.Null(vm.NextDisc);
+    }
+
     [Theory]
     [InlineData(-1)]
     [InlineData(7)]

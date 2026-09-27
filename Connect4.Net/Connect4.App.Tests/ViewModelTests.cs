@@ -119,6 +119,23 @@ public sealed class ViewModelTests
         Assert.Equal(SearchLimits.DefaultEndgameThreshold, settings!.Game.EndgameThreshold);
     }
 
+    [Theory]
+    [InlineData(Sound.Drop)]
+    [InlineData(Sound.Win)]
+    [InlineData(Sound.Loss)]
+    [InlineData(Sound.Draw)]
+    public void SoundWaves_AreValidWavFiles(Sound sound)
+    {
+        byte[] wav = SoundWaves.Create(sound);
+
+        Assert.Equal("RIFF"u8.ToArray(), wav[..4]);
+        Assert.Equal("WAVE"u8.ToArray(), wav[8..12]);
+        Assert.Equal(wav.Length - 8, BitConverter.ToInt32(wav, 4));
+        Assert.Equal(wav.Length - 44, BitConverter.ToInt32(wav, 40));
+        Assert.True(wav.Length > 1000);
+        Assert.Same(wav, SoundWaves.Create(sound));
+    }
+
     [Fact]
     public async Task LocalEngineHost_SearchesTheGivenMoves()
     {
