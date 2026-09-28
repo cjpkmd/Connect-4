@@ -19,6 +19,12 @@ Scores are from the side to move ([Scores.cs](../../Connect4.Net/Connect4.Engine
 
 Because $n$ is the absolute move number, a faster win scores higher, and the score of a position does not depend on where the search started, so it can be stored in the hash table as it is. `Scores.IsDecided(score)` is true beyond ±1 000; the app shows such scores as "Red wins in 3 moves".
 
+```text
+-(Win - 7) ... -(Win - 42)     -1 000 ........ 0 ........ +1 000     Win - 42 ... Win - 7
+  losses: the latest loss        heuristic scores (evaluation)         wins: the fastest win
+  is the highest                                                       is the highest
+```
+
 `SearchResult` returns the move (0-based column), the score, the `ScoreKind` (`None`, `Heuristic`, `Exact`), the depth, the nodes, the time, the expected line of play (the principal variation, read from the hash table) and `FromBook`, which is true for a move from the opening book (chapter 11).
 
 ## Search as a whole
@@ -50,6 +56,20 @@ A result is **final** when searching deeper cannot change it:
 - the score is decided and the depth is at least the distance to the winning move. Before that, a faster win could still exist: a forced-move extension (below) can find a long win at a small depth while a shorter one is still beyond the horizon.
 
 ## One node
+
+Alpha-beta skips moves that cannot change the result. In this small example (shown as minimax: the root picks the highest score, the opponent the lowest) the first reply to move B already scores 2. The opponent will pick at most 2 after B, and the root already has 3 from A, so B's other replies are not searched: a **cutoff**.
+
+```mermaid
+flowchart TD
+    Root["Root, our move: 3"] --> A["A, opponent: 3"]
+    Root --> B["B, opponent: ≤ 2"]
+    A --> A1["3"]
+    A --> A2["5"]
+    B --> B1["2"]
+    B -. "cutoff" .-> B2["not searched"]
+```
+
+Negamax writes the same with every score from the side to move, so each level negates the scores of the level below and the window $(\alpha, \beta)$ becomes $(-\beta, -\alpha)$.
 
 `Negamax(position, depth, alpha, beta)` is fail-soft; the child is searched with the window (−β, −α):
 

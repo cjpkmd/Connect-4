@@ -24,6 +24,14 @@ When a move wins, `Play` stores the mover as the winner and uses `Position.FindF
 
 `Undo` and `Redo` only move `Ply`; the moves after it are kept until a new move is played. The app decides how far to go back: against the computer back to the human's previous turn, in human against human one move (chapter 12).
 
+```text
+                 Moves (1-based)    Ply   Position
+played           4 4 5 3 2          5     after 4 4 5 3 2
+Undo, Undo       4 4 5 | 3 2        3     after 4 4 5; 3 and 2 can be redone
+Redo             4 4 5 3 | 2        4     after 4 4 5 3
+Play column 6    4 4 5 3 6          5     after 4 4 5 3 6; the undone 2 is gone
+```
+
 ## The text format
 
 [GameRecordFormat.cs](../../Connect4.Net/Connect4.Engine/GameRecordFormat.cs):

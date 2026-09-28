@@ -51,6 +51,28 @@ When the mode is changed during a game, the human keeps the side to move and the
 
 In both, `NewGame()` clears the search hash table.
 
+One computer move in the browser:
+
+```mermaid
+sequenceDiagram
+    participant VM as MainViewModel
+    participant Host as WebEngineHost
+    participant JS as engine-client.js
+    participant W as Web Worker (EngineWorker)
+    VM->>Host: ChooseMoveAsync(moves, limits)
+    Host->>JS: call("chooseMove", request JSON)
+    JS->>W: postMessage
+    loop while the engine searches
+        W-->>JS: progress JSON
+        JS-->>Host: OnProgress
+        Host-->>VM: SearchInfo (analysis panel)
+    end
+    W-->>JS: result JSON
+    JS-->>Host: the call returns
+    Host-->>VM: SearchResult
+    Note over VM,W: Move Now or Stop: the host terminates the worker and starts a new one.<br/>Move Now returns the best move reported so far.
+```
+
 ## The analysis panel
 
 `AnalysisViewModel` shows the progress and the result: the move searched, the depth ("12 plies", "solving (20 empty)", or "book" for a move from the opening book), the value, the best move, the expected line, the nodes and the time. Columns are shown 1–7. The value is shown from **Red's view**: "+25" is good for Red. Decided scores are shown as "Red wins in 3 moves" (counting the winner's moves) or "Draw".

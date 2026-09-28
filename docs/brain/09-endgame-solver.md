@@ -34,6 +34,21 @@ where $n$ is the winner's own disc number for the winning disc (counting that pl
 
 With `weak: true` the range is [−1, 1]; as in C++, only the sign of the result is then exact.
 
+For example, for the empty board (score 1) the range starts at [−21, 21]. If every test only answers yes or no, eight null-window searches find the score; a real search often returns a tighter bound and needs fewer:
+
+| Test | Range | `med` | Score > `med`? | New range |
+|---:|---|---:|---|---|
+| 1 | [−21, 21] | −10 | yes | [−9, 21] |
+| 2 | [−9, 21] | 10 | no | [−9, 10] |
+| 3 | [−9, 10] | −4 | yes | [−3, 10] |
+| 4 | [−3, 10] | 5 | no | [−3, 5] |
+| 5 | [−3, 5] | 2 | no | [−3, 2] |
+| 6 | [−3, 2] | −1 | yes | [0, 2] |
+| 7 | [0, 2] | 1 | no | [0, 1] |
+| 8 | [0, 1] | 0 | yes | [1, 1] |
+
+The first tests ask about half the possible score (−10, 10) rather than the middle (0). A test far from 0 asks about a fast win or loss, which only needs short lines and is cheap to answer; a test near 0 needs lines to the end of the game.
+
 `Analyze(position)` solves the position after every move (a full column gets `InvalidMove`). The search uses it to find the best move, because `Solve` only gives the score of the position. A strong solve is used, not the weak one, because the computer must play the fastest win.
 
 ## The hash table
@@ -80,7 +95,19 @@ It uses positions from games the engine plays against itself, with 15 % random m
 | 34 | 7.0 s / 4.7 s | 51 % |
 | 36 | 26 s / 17.6 s | 8 % |
 
-The time roughly doubles with each extra empty cell. 31 is the largest count where 90 % finish within 1.7 s; the browser is about half as fast, so the default is 30 (it was 24 before the measurement). A solve that does not finish only costs thinking time: the move of the heuristic search is played. In a game the table is kept between moves, so real solves are faster than measured.
+The time roughly doubles with each extra empty cell. 31 is the largest count where 90 % finish within 1.7 s; the browser is about half as fast, so the default is 30 (it was 24 before the measurement).
+
+```mermaid
+%%{init: {"themeVariables": {"xyChart": {"plotColorPalette": "#1565c0, #d32f2f"}}}}%%
+xychart-beta
+    title "Engine games: solves done within 1.7 s (bars) and the 90 % goal (line)"
+    x-axis "Empty cells" [24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38]
+    y-axis "Share of positions (%)" 0 --> 100
+    bar [100, 100, 100, 100, 100, 100, 98, 92, 85, 69, 51, 35, 8, 5, 0]
+    line [90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90]
+```
+
+A solve that does not finish only costs thinking time: the move of the heuristic search is played. In a game the table is kept between moves, so real solves are faster than measured.
 
 ## Speed
 

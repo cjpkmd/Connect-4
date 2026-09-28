@@ -21,6 +21,13 @@ Many move orders lead to the same position. The **transposition table** (hash ta
 
 A **lower** bound means the score is at least the value (a cutoff: the search stopped when a move reached β); an **upper** bound means at most the value (no move beat α); **exact** means the value is the score.
 
+```text
+bit 63                          31 30   27 26            11 10     5 4    3 2    0
+    +-----------------------------+-------+----------------+--------+------+------+
+    | key check (33)              | age   | value (16)     | depth  | bound| col  |
+    +-----------------------------+-------+----------------+--------+------+------+
+```
+
 ## The slot and the key check
 
 The position key is 49 bits (chapter 02). The table multiplies it by an odd constant modulo $2^{49}$, which is a bijection (every key gives a different result):
@@ -30,6 +37,11 @@ h = (\text{key} \cdot \texttt{0x9E3779B97F4A7C15}) \bmod 2^{49}
 $$
 
 With $2^k$ slots, the top $k$ bits of $h$ choose the slot and the other $49 - k$ bits are stored as the key check. Slot and key check together are $h$, and $h$ gives back the key, so a hit is never a different position: there are no false hits. The multiplication also spreads the keys, whose low bits (the left columns) would otherwise cluster.
+
+```text
+h (49 bits):   [ slot: top k bits ][ key check: low 49 - k bits ]
+               with k = 24:  24 bits      25 bits
+```
 
 The 33-bit key check field limits the table to at least $2^{16}$ slots; the maximum is $2^{26}$.
 

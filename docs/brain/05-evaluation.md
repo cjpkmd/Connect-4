@@ -27,9 +27,25 @@ The weights are in `EvaluationWeights`, a record with the defaults above, so the
 
 Late in the game the players are often forced to fill columns one disc at a time. Red moves first, so when the remaining cells are filled in turn, Red gets the cells on odd rows and Yellow those on even rows (this is the **zugzwang** analysis by Victor Allis). A Red threat on an odd row is therefore likely to be realised, and so is a Yellow threat on an even row. A cell that is a threat for both players gives this bonus only to the player whose good row it is on, so shared threats need no separate term.
 
+```text
+row 6   even   Yellow's good row
+row 5   odd    Red's good row
+row 4   even   Yellow's good row
+row 3   odd    Red's good row
+row 2   even   Yellow's good row
+row 1   odd    Red's good row
+```
+
 ### Stacked threats
 
 Two threats of the same player on top of each other in one column usually win: when the opponent blocks the lower one, the player wins on the upper one.
+
+```text
+one column
+row 4   .    Red's second threat
+row 3   .    Red's threat: when Yellow blocks it, Red plays row 4 and wins
+row 2   Y
+```
 
 ### Centre
 

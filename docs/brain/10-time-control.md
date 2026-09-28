@@ -35,6 +35,26 @@ In time-per-game mode the computer makes at most half of the remaining moves, so
 - The hard limit is checked every 1 024 nodes. When it is reached, the running depth is abandoned and the result of the last finished depth is used.
 - The endgame solver gets the time up to the hard limit; if it does not finish, the heuristic move is played.
 
+One move with 5 seconds per move, when few enough cells are empty for the solver:
+
+```mermaid
+gantt
+    title One move with 5 s per move
+    dateFormat x
+    axisFormat %S s
+    tickInterval 1second
+    section Search
+    Depth 1, 2, 3, ...                 : 0, 3333
+    The last depth is finished          : 3333, 3600
+    section Solver
+    Endgame solver, up to the hard limit : 3600, 5000
+    section Limits
+    Soft limit (2/3)                   : milestone, 3333, 0ms
+    Hard limit                         : milestone, 5000, 0ms
+```
+
+The depth that is running at the soft limit may finish or be abandoned at the hard limit; the solver gets what is left, at most the last third.
+
 ## Move Now and stopping
 
 `Search` takes two tokens:

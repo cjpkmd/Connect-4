@@ -8,7 +8,14 @@ The first 9 plies are played from an **opening book**: the exact score of every 
 
 ## What is in the book
 
-Every position that can occur after 0 to 9 plies, with its exact **strong** score for the side to move in Pascal Pons' convention (chapter 09): 0 for a draw, otherwise 22 minus the number of the winner's disc, positive when the side to move wins. A position and its mirror image have the same score, so only one of them is stored.
+Every position that can occur after 0 to 9 plies, with its exact **strong** score for the side to move in Pascal Pons' convention (chapter 09): 0 for a draw, otherwise 22 minus the number of the winner's disc, positive when the side to move wins. A position and its mirror image have the same score, so only one of them is stored. For example `1123` and `7765` are the same position mirrored:
+
+```text
+1123             7765
+. . . . . . .    . . . . . . .
+Y . . . . . .    . . . . . . Y
+R R Y . . . .    . . . . Y R R
+```
 
 | Discs | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | Total |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -34,6 +41,20 @@ flowchart LR
    $$
 
    where $n$ is the number of discs in $p$. The shallow positions are the expensive ones to solve (one position after 1 ply takes 40–143 seconds, a leaf after 9 plies about a quarter of a second on average), so backing up saves most of the work.
+
+For example the empty board in the book. Each child's score is for Yellow, who is to move there; the arrows show Red's score for the move, the negation. The best is column 4, so the empty board scores max(−2, −1, 0, 1, 0, −1, −2) = 1:
+
+```mermaid
+flowchart TD
+    Root["Empty board: 1"]
+    Root -- "−2" --> C1["1: Yellow 2"]
+    Root -- "−1" --> C2["2: Yellow 1"]
+    Root -- "0" --> C3["3: Yellow 0"]
+    Root == "1" ==> C4["4: Yellow −1"]
+    Root -- "0" --> C5["5: Yellow 0"]
+    Root -- "−1" --> C6["6: Yellow 1"]
+    Root -- "−2" --> C7["7: Yellow 2"]
+```
 
 The C++ program has a book as well (`OpeningBook.hpp`, `7x6.book`), but it is a hash table of solved positions up to 14 plies, used by the solver. This book is much smaller, full-width, a text file, and used by the search.
 

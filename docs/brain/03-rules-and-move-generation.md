@@ -19,14 +19,31 @@ Like the C++ class, the search functions assume that the position contains no fo
 
 ## Winning cells
 
-`ComputeWinningPosition(discs, mask)` returns every **empty** cell where one more disc of `discs` completes a four. For each of the four directions with a shift $s$ (1 = vertical, 7 = horizontal, 6 and 8 = the diagonals) it combines shifted copies of the discs, for example horizontally:
+`ComputeWinningPosition(discs, mask)` returns every **empty** cell where one more disc of `discs` completes a four. It works on all cells at once with shifts. Moving one step on the board is a fixed shift of the bit number $b$ (chapter 02):
+
+```text
+up-left    b-6    up      b+1    up-right    b+8
+left       b-7            b      right       b+7
+down-left  b-8    down    b-1    down-right  b+6
+```
+
+So the four directions have the shifts $s$ = 1 (vertical), 7 (horizontal), 6 and 8 (the diagonals). For each of them, shifted copies of the discs $d$ are combined, for example horizontally:
 
 $$
 p = (d \ll 7) \mathbin{\&} (d \ll 14), \qquad
 r = (p \mathbin{\&} (d \ll 21)) \mid (p \mathbin{\&} (d \gg 7))
 $$
 
-and the same for the other side, so all four positions of the empty cell in a line are covered. Vertically only the cell above three discs can complete a four. The result is ANDed with the empty cells (`BoardMask ^ mask`).
+and the same for the other side, so all four positions of the empty cell in a line are covered. `d << 7` has a 1 at cell $x$ when the cell to the left of $x$ has a disc, so each term below checks three cells around an empty cell $x$ (`_`):
+
+| Line (left to right) | Discs needed at | Term |
+|---|---|---|
+| `X X X _` | $x-21$, $x-14$, $x-7$ | $(d \ll 7) \mathbin{\&} (d \ll 14) \mathbin{\&} (d \ll 21)$ |
+| `X X _ X` | $x-14$, $x-7$, $x+7$ | $(d \ll 7) \mathbin{\&} (d \ll 14) \mathbin{\&} (d \gg 7)$ |
+| `X _ X X` | $x-7$, $x+7$, $x+14$ | $(d \gg 7) \mathbin{\&} (d \gg 14) \mathbin{\&} (d \ll 7)$ |
+| `_ X X X` | $x+7$, $x+14$, $x+21$ | $(d \gg 7) \mathbin{\&} (d \gg 14) \mathbin{\&} (d \gg 21)$ |
+
+Vertically only the cell above three discs can complete a four. The result is ANDed with the empty cells (`BoardMask ^ mask`).
 
 These cells are called **threats** in these documents. They are used by the pruning below, by the move ordering (chapter 06) and by the evaluation (chapter 05).
 
@@ -45,6 +62,14 @@ These cells are called **threats** in these documents. They are used by the prun
 2. If the opponent can win in more than one playable cell, every move loses: return 0.
 3. If the opponent can win in exactly one playable cell, that is the only move (a **forced block**).
 4. Remove the cells directly below an opponent threat (`opponentWin >> 1`): playing there would let the opponent win on top.
+
+```text
+one column
+row 4   .    Yellow's threat: a Yellow disc here makes four
+row 3   .    removed: after Red plays here, Yellow plays on top and wins
+row 2   R
+row 1   Y
+```
 
 ```mermaid
 flowchart TD

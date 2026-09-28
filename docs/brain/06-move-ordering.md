@@ -21,6 +21,12 @@ $$
 3, 2, 4, 1, 5, 0, 6 \quad (\text{0-based})
 $$
 
+On the board, from the centre outwards:
+
+| Column (1-based) | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+|---|---|---|---|---|---|---|---|
+| Tried as number | 6 | 4 | 2 | 1 | 3 | 5 | 7 |
+
 The C++ comment says `3, 4, 2, 5, 1, 6, 0`, but its formula `WIDTH/2 + (1 - 2*(i%2)) * (i+1)/2` gives the order above, and that order is kept.
 
 ## MoveSorter
