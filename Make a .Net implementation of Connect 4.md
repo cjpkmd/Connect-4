@@ -190,7 +190,7 @@ Weights are tuned by hand (`EvaluationWeights`). Engine-vs-engine tuning can com
 
 ### 4.9 Opening book
 
-Goal: the computer plays the first plies perfectly and at once, so the weak spots of the evaluation in the opening (e.g. it opens in column 2 at 1 s per move) do not matter. The book is small: exact scores for every position of the first 6 plies, not a large database.
+Goal: the computer plays the first plies perfectly and at once, so the weak spots of the evaluation in the opening (e.g. it opens in column 2 at 1 s per move) do not matter. The book: exact scores for every position of the first 9 plies (first made with depth 6, then raised to depth 9).
 
 **Ideas found**
 
@@ -201,7 +201,7 @@ Goal: the computer plays the first plies perfectly and at once, so the weak spot
 **Design (differs from the C++ book)**
 
 - **Full-width to depth N**: every position with at most N discs, mirror positions stored once.
-- **Only the leaves are solved** (the positions with exactly N discs). The scores of shallower positions are *backed up* by negamax from their children: a winning move gives `(43 − moves) / 2`, otherwise the score is the maximum of −(child score) over the playable columns. This avoids the costly solves of shallow positions: one position after 1 ply takes 40–143 s, after 2 plies about 45 s (measured). A leaf after 6 plies takes 2 s on average.
+- **Only the leaves are solved** (the positions with exactly N discs). The scores of shallower positions are *backed up* by negamax from their children: a winning move gives `(43 − moves) / 2`, otherwise the score is the maximum of −(child score) over the playable columns. This avoids the costly solves of shallow positions: one position after 1 ply takes 40–143 s, after 2 plies about 45 s (measured). A leaf after 6 plies takes 2 s on average, after 9 plies about 0.25 s.
 - **Strong scores** (C++ convention −18…18), so the computer plays the fastest win or slowest loss and the analysis panel shows "Red wins in N moves" from the first move. A weak solve is not cheaper at the beginning: after 1 ply (`4`), strong took 143 s and weak 153 s.
 - **Book move**: in a position with fewer than N discs, look up all children and play the best (ties at random with the seeded generator, as 4.7). Mirror moves always tie, so e.g. after `44` the replies in columns 3 and 5 are picked at random. A position with exactly N discs has a score in the book but no move; the normal search plays there.
 - "Best variations" therefore means: the computer's own book moves are always best, and every reply of the opponent is covered, including bad ones. A book that only stores the lines of best play would still need exact scores for all alternatives at the computer's turns, which are the costly shallow solves, so it would not be cheaper.
@@ -214,15 +214,16 @@ Goal: the computer plays the first plies perfectly and at once, so the weak spot
 | **6** | **11,094** | **8,231** | **1.94 s** | 0.98 s | 5.0 s | 20.7 s | **≈ 4.4 h** | **≈ 35 min** | **89 KB** |
 | 7 | 38,203 | 27,109 | 0.94 s | 0.63 s | 2.2 s | 7.8 s | ≈ 7.1 h | ≈ 55 min | 306 KB |
 | 8 | 129,498 | 91,295 | 0.53 s | 0.26 s | 1.0 s | 11.4 s | ≈ 13.6 h | ≈ 1.7 h | 1.0 MB |
-| 9 | 399,029 | 269,531 | not measured | | | | | | 3.2 MB |
+| **9** | **399,029** | **269,531** | **≈ 0.25 s** ² | | | | **≈ 17 h** | **2 h 7 min (made)** | **3.2 MB** |
 
 ¹ Depth 5: 12 positions from random games, not an even sample of the leaves (at depth 6 the two methods gave 2.3 s and 1.9 s).
+² Depth 9: from the real run (35 leaves per second with 12 workers, each about 1.5× slower than alone). The depth-6 book took 37 minutes, as estimated.
 
 - Unique positions per ply (mirror reduced): 1, 4, 25, 121, 568, 2,144, 8,231, 27,109, 91,295, 269,531 (plies 0–9).
 - Parallel speed-up, measured: 12 solver processes at once each ran 1.5× slower than one alone, so 12 workers give about 8×. With 12 tables of 2^24 entries this uses about 1 GB.
 - The time per position varies by a factor of 100, so the estimates are ±50 %. Keeping each worker's table between leaves (leaves sorted by move string, so neighbours share subtrees) should make it faster; this was not measured.
 
-**Recommendation: depth 6.** The first 6 plies (3 moves for each side) come from the book: 11,094 positions, 89 KB binary or about 110 KB as text, about 4.4 CPU hours, i.e. about 35–45 minutes with 12 workers. That is far below the one-day limit. Depth 8 also fits (13.6 CPU hours, under 2 hours with 12 workers, and even on one core within a day), but the book is 12× larger; the depth is a parameter of the tool, so it can be raised later. Depth 9 and more is larger than wanted.
+**Choice: depth 9.** The first recommendation was depth 6 (the first 6 plies, 11,094 positions, about 110 KB text, 37 minutes), and that book was made first. It was then raised to depth 9: the first 9 plies (5 moves of Red, 4 of Yellow) come from the book, 399,029 positions, 2 hours 7 minutes with 12 workers, well within the one-day limit. The price is size: 4.7 MB as text (about 750 KB more to download in the web version, Brotli), 3.2 MB in memory, and about 150 ms to load on the desktop (the web worker loads it when it starts; the first book move comes after about half a second). The depth is a parameter of the tool.
 
 Side result: positions after 8 plies are solved in 0.5 s on average (max 11 s), so the endgame threshold default of 24 empty cells (4.3) is very cautious. It can be tuned later; that is not part of the book work.
 
@@ -230,11 +231,11 @@ Side result: positions after 8 plies are solved in 0.5 s on average (max 11 s), 
 
 - Text, as the `Test positions/` files: one line `<moves> <score>` per position (score from the side to move, C++ convention), sorted by ply and then by moves. Lines starting with `#` are comments; the first line records depth, score type, date and generator version.
 - Stored as `Connect4.Engine/Book/OpeningBook.txt`, an embedded resource of `Connect4.Engine`, so the desktop app and the web worker get it without an extra download. Text is readable, gives useful git diffs, and single lines can be checked on Pascal Pons' online solver.
-- Loaded once (lazily) into a sorted `ulong[]` of `CanonicalKey << 8 | (score + 64)`, looked up with binary search (89 KB in memory, a few milliseconds to load).
+- Loaded once (lazily) into a sorted `ulong[]` of `CanonicalKey << 8 | (score + 64)`, looked up with binary search (3.2 MB in memory, about 150 ms to load; each line is parsed into a position only once).
 
 **Generator: `Connect4.Tools book`**
 
-- `book generate --depth 6 [--workers N] [--table 24] --out OpeningBook.txt`
+- `book generate [--depth 9] [--workers N] [--table 24] --out OpeningBook.txt`
   1. List the unique positions up to the depth (breadth first, mirror reduced, as `generator.cpp explore`).
   2. Solve the leaves in parallel: one `EndgameSolver` per worker (its own table, kept between leaves), leaves taken from a shared queue in move-string order. Default workers: `Environment.ProcessorCount / 2` (12 here).
   3. Append each result at once to `OpeningBook.txt.partial`, so a stopped run resumes and skips the solved leaves.
@@ -299,7 +300,7 @@ As Stello.Web:
 
 - Blazor WebAssembly standalone, engine runs in a Web Worker via `[JSExport]`, AOT compilation in Release (`wasm-tools` workload).
 - Pages: `/` game, `/docs` and `/docs/{slug}` brain documentation (Markdown → HTML with Markdig), NotFound.
-- Settings and appearance in local storage. The opening book is embedded in the engine assembly (about 110 KB text), so the worker has it without an extra download.
+- Settings and appearance in local storage. The opening book is embedded in the engine assembly (4.7 MB text, about 750 KB with Brotli), so the worker has it without an extra download; the worker loads it when it starts.
 - Same hash table sizes as desktop (2^24 entries each, ≈ 218 MB in the Web Worker; fallback 2^20, see 4.6).
 - A running search cannot be interrupted inside the worker, so Stop and Move Now terminate the worker (Move Now plays the best move reported so far) and start a new one with empty tables. Time limits work inside the worker because they are checked with a clock, not a timer.
 - Appearance (View menu): Blue, Golden Oak or Reddish Wood board (Stello's wood textures), 3D discs, animated drops.
@@ -369,4 +370,4 @@ Plus `Connect 4 porting documentation.md` like Stello's: per part, the C++ origi
 9. Blazor web app, Web Worker, appearance/themes, docs pages.
 10. Documentation, GitHub Actions workflow, Azure Static Web App.
 11. Opening book generator: `Mirror`/`CanonicalKey`, `Connect4.Engine/Book` (enumeration, back-up, file format, `OpeningBook`), `Connect4.Tools` with `book generate` (parallel, resumable) and `book verify`, tests with small depths and a fake solver.
-12. Generate the depth-6 book on this computer (about 35–45 minutes) and verify it. Engine integration (`SearchEngine`, `FromBook`, `UseBook`), the setting in WPF and web, analysis "Book", tests, docs chapter 14, porting documentation, About text.
+12. Generate the depth-6 book on this computer (about 35–45 minutes) and verify it. Engine integration (`SearchEngine`, `FromBook`, `UseBook`), the setting in WPF and web, analysis "Book", tests, docs chapter 14, porting documentation, About text. Afterwards the book was raised to depth 9 (2 hours 7 minutes), with a faster loader.

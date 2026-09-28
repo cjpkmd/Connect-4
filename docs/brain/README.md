@@ -6,7 +6,7 @@ Connect 4 is a game for two players on a board with 7 columns and 6 rows. The co
 - **the evaluation**: threats, odd/even rows, open lines and centre control;
 - **the search**: iterative deepening alpha-beta (principal variation search) with a hash table, stopped by a depth or time limit, as in Stello;
 - **the endgame solver**: the C++ solver, ported 1:1, which finds the exact result near the end of the game;
-- **the opening book**: the exact scores of every position of the first 6 plies, made with the endgame solver by `Connect4.Tools`.
+- **the opening book**: the exact scores of every position of the first 9 plies, made with the endgame solver by `Connect4.Tools`.
 
 These documents explain how the parts work and how they fit together. They describe the C# code in [Connect4.Net](../../Connect4.Net). How the C++ code was ported, and what was changed, is described in [Connect 4 porting documentation.md](../../Connect%204%20porting%20documentation.md).
 
@@ -16,7 +16,7 @@ This is how the computer finds a move. Each box is explained in a chapter.
 
 ```mermaid
 flowchart TD
-    Start["Position and time limits"] --> Book{"Fewer than 6 discs<br/>and the book is on?"}
+    Start["Position and time limits"] --> Book{"Fewer than 9 discs<br/>and the book is on?"}
     Book -- "yes" --> PlayBook["Play the best book move<br/>(exact, at once)"]
     Book -- "no" --> Win{"A move that wins at once?"}
     Win -- "yes" --> PlayWin["Play it (exact win)"]
@@ -52,7 +52,7 @@ The time limit can stop the search at any point; the best move of the last finis
 | 11 | [App integration](11-app-integration.md) | The game loop, threading, the browser worker, settings |
 | 12 | [Glossary](12-glossary.md) | The terms used in these documents |
 | 13 | [References](13-references.md) | Articles and source code on the internet |
-| 14 | [Opening book](14-opening-book.md) | The solved first 6 plies, how the book is made and used |
+| 14 | [Opening book](14-opening-book.md) | The solved first 9 plies, how the book is made and used |
 
 ## Reading paths
 

@@ -60,7 +60,7 @@
         <TextBlock Grid.Row="5" Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Center"
                    Text="{Binding EndgameThreshold, StringFormat={}{0} cells}" />
 
-        <CheckBox Grid.Row="6" Grid.ColumnSpan="3" Margin="0,16,0,0" Content="Use opening book (plays the first 6 plies at once and perfectly)"
+        <CheckBox Grid.Row="6" Grid.ColumnSpan="3" Margin="0,16,0,0" Content="Use opening book (plays the first 9 plies at once and perfectly)"
                   IsChecked="{Binding UseOpeningBook}" />
 
         <StackPanel Grid.Row="7" Grid.ColumnSpan="3" Margin="0,16,0,0" Orientation="Horizontal" HorizontalAlignment="Right">

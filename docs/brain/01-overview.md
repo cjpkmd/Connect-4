@@ -60,7 +60,7 @@ flowchart LR
 1. The human drops a disc; `MainViewModel` plays it and starts the computer (chapter 11).
 2. The view model asks the `IEngineHost` for a move with the game's moves and the `SearchLimits` from the settings. On the desktop the engine runs on a thread-pool thread; in the browser in a Web Worker.
 3. `ComputerPlayer.ChooseMove` checks that the game is not over and calls `SearchEngine.Search`.
-4. In the first 6 plies `Search` plays the best move from the opening book at once (chapter 14).
+4. In the first 9 plies `Search` plays the best move from the opening book at once (chapter 14).
 5. Otherwise it plays a winning move at once, returns a loss if every move loses, and plays a single non-losing move without searching.
 6. Otherwise it searches depth 1, 2, 3, … (chapter 07) until the result is exact or the depth or soft time limit is reached (chapter 10). Each root move sends a `SearchInfo` to the analysis panel.
 7. Near the end of the game the endgame solver may take over (chapter 09).

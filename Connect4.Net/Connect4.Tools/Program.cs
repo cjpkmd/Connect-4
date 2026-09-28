@@ -22,7 +22,7 @@ if (args is ["book", var command, .. var rest])
 
 Console.Error.WriteLine("""
     Usage:
-      Connect4.Tools book generate [--depth 6] [--workers N] [--table 24] [--out OpeningBook.txt]
+      Connect4.Tools book generate [--depth 9] [--workers N] [--table 24] [--out OpeningBook.txt]
           Solves every position after --depth plies and writes the opening book. A stopped run
           (Ctrl+C) continues from <out>.partial when the same command is run again.
       Connect4.Tools book verify [--book OpeningBook.txt] [--sample 200] [--min-ply 3] [--seed S] [--workers N] [--table 24]

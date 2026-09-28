@@ -2,7 +2,7 @@
 
 This document describes, phase by phase, how the Connect 4 program was built: which parts were ported from Pascal Pons' C++ solver (`connect4-master/`, AGPL-3.0; a private project, so the licence is not an issue), which were taken over from Stello (the author's Othello program), and which are new. For each part it says whether it is a **1:1 port**, **changed**, or **new**, and why.
 
-The goal of the brain (from the specification): connect4-master is used as a fast search core — bitboard, move generation, threat detection, move ordering — and its exact solver is used near the end of the game. The move itself is chosen as in Stello: iterative deepening alpha-beta, stopped by a depth or time limit, with a heuristic evaluation at the horizon. The first 6 plies come from a small opening book of solved positions (phases 11 and 12).
+The goal of the brain (from the specification): connect4-master is used as a fast search core — bitboard, move generation, threat detection, move ordering — and its exact solver is used near the end of the game. The move itself is chosen as in Stello: iterative deepening alpha-beta, stopped by a depth or time limit, with a heuristic evaluation at the horizon. The first 9 plies come from an opening book of solved positions (phases 11 and 12).
 
 The engine is described in detail in [docs/brain](docs/brain/README.md).
 
@@ -163,14 +163,14 @@ The engine is described in detail in [docs/brain](docs/brain/README.md).
 
 ## Phase 12 – Opening book in the engine and apps
 
-- The depth-6 book was generated on the author's computer: 11 094 positions, 8 231 leaves, 37 minutes with 12 threads (100 KB). It is `Connect4.Engine/Book/OpeningBook.txt`, an embedded resource, read by `OpeningBook.Default` the first time it is used.
-- `SearchEngine.Search` plays the best book move at once when `SearchLimits.UseBook` is on and the position has fewer than 6 discs; `SearchResult.FromBook` marks it, and the analysis panel shows "book".
+- A depth-6 book was generated first: 11 094 positions, 8 231 leaves, 37 minutes with 12 threads (100 KB). It was then replaced by a **depth-9 book**: 399 029 positions, 269 531 leaves, 2 hours 7 minutes with 12 threads (4.7 MB, about 750 KB more to download in the web version). It is `Connect4.Engine/Book/OpeningBook.txt`, an embedded resource, read by `OpeningBook.Default` the first time it is used (about 150 ms on the desktop); for this size the loader parses each line into a position only once.
+- `SearchEngine.Search` plays the best book move at once when `SearchLimits.UseBook` is on and the position has fewer than 9 discs; `SearchResult.FromBook` marks it, and the analysis panel shows "book".
 - `GameSettings.UseOpeningBook` (default on) with a check box in both Settings dialogs; the web worker protocol passes it on.
 - The About text mentions the book.
 
 **Assessment:** New. The C++ solver does not use this book (it only runs near the end of the game).
 
-**Tests:** the built-in book has the known first-move scores and a consistent back-up, and agrees with every position of at most 6 moves in `Test_L1_R1`–`R3`; the search uses it, picks among equal book moves at random, and searches when the book is off. `book verify` solved a random sample of the book again.
+**Tests:** the built-in book has the known first-move scores and a consistent back-up, and agrees with every position of at most 9 moves in `Test_L1_R1`–`R3`; the search uses it, picks among equal book moves at random, and searches when the book is off. `book verify` solved 400 random positions of the depth-9 book again, all correct.
 
 ## Not done
 

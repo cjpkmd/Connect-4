@@ -12,10 +12,10 @@ public class BuiltInBookTests
     public static TheoryData<string> OpeningTestSets => ["Test_L1_R1", "Test_L1_R2", "Test_L1_R3"];
 
     [Fact]
-    public void Default_HasEveryPositionOfTheFirstSixPlies()
+    public void Default_HasEveryPositionOfTheFirstNinePlies()
     {
-        Assert.Equal(6, Book.Depth);
-        Assert.Equal(11_094, Book.Count);
+        Assert.Equal(9, Book.Depth);
+        Assert.Equal(399_029, Book.Count);
     }
 
     [Fact]
@@ -112,7 +112,7 @@ public class BuiltInBookTests
     [Fact]
     public void Search_AtTheBookDepth_Searches()
     {
-        SearchResult result = NewEngine().Search(Position.FromMoves("444444"), SearchLimits.FixedDepth(4));
+        SearchResult result = NewEngine().Search(Position.FromMoves("444444333"), SearchLimits.FixedDepth(4));
 
         Assert.False(result.FromBook);
         Assert.Equal(4, result.Depth);

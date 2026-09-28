@@ -18,7 +18,7 @@ internal static class BookCommands
     public static int Generate(Options options)
     {
         options.AllowOnly("depth", "workers", "table", "out");
-        int depth = options.GetInt("depth", 6, 1, BookBuilder.MaxDepth);
+        int depth = options.GetInt("depth", 9, 1, BookBuilder.MaxDepth);
         int workers = options.GetInt("workers", DefaultWorkers, 1, 256);
         int table = options.GetInt("table", DefaultTable, 17, 27);
         string output = options.GetString("out", "OpeningBook.txt");

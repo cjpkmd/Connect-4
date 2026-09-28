@@ -21,13 +21,13 @@
 | **Hard limit** | The time at which the search stops at once (chapter 10). |
 | **Iterative deepening** | Searching depth 1, 2, 3, … until a limit is reached. |
 | **Key** | The unique 49-bit number of a position, `Current + Mask` (chapter 02). |
-| **Leaf** | A position in the opening book with the most discs (6); only these are solved (chapter 14). |
+| **Leaf** | A position in the opening book with the most discs (9); only these are solved (chapter 14). |
 | **Move Now** | Stop the computer and play the best move found so far. |
 | **Negamax** | Minimax written so that every score is from the side to move: a position's score is the maximum of the negated scores after its moves. |
 | **Node** | A position visited by the search. |
 | **Non-losing move** | A move after which the opponent cannot win at once (chapter 03). |
 | **Null window** | A window (α, α + 1) that only answers "better than α or not?". |
-| **Opening book** | The stored exact scores of all positions of the first 6 plies; the computer plays from it at once (chapter 14). |
+| **Opening book** | The stored exact scores of all positions of the first 9 plies; the computer plays from it at once (chapter 14). |
 | **Parity (odd/even rows)** | Red's threats on rows 1, 3, 5 and Yellow's on rows 2, 4, 6 are the dangerous ones late in the game (chapter 05). |
 | **Perft** | Counting the move sequences of a given length, to test move generation. |
 | **Ply** | One move by one side. |

@@ -12,24 +12,25 @@ public readonly record struct BookLine(string Moves, int Score);
 /// </summary>
 public static class BookFile
 {
-    public static List<BookLine> Read(TextReader reader)
+    public static List<BookLine> Read(TextReader reader) => [.. ReadWithPositions(reader).Select(entry => entry.Line)];
+
+    internal static IEnumerable<(BookLine Line, Position Position)> ReadWithPositions(TextReader reader)
     {
-        var lines = new List<BookLine>();
         int number = 0;
         while (reader.ReadLine() is { } text)
         {
             number++;
             if (text.Length > 0 && text[0] != '#')
             {
-                lines.Add(Parse(text, number));
+                yield return ParseWithPosition(text, number);
             }
         }
-
-        return lines;
     }
 
     /// <exception cref="FormatException">The moves cannot be played or the score is not a valid solver score.</exception>
-    public static BookLine Parse(string text, int lineNumber = 0)
+    public static BookLine Parse(string text, int lineNumber = 0) => ParseWithPosition(text, lineNumber).Line;
+
+    private static (BookLine Line, Position Position) ParseWithPosition(string text, int lineNumber)
     {
         string[] parts = text.Split(' ');
         if (parts.Length != 2
@@ -39,16 +40,17 @@ public static class BookFile
             throw new FormatException($"Line {lineNumber}: expected \"<moves> <score>\", found \"{text}\".");
         }
 
+        Position position;
         try
         {
-            Position.FromMoves(parts[0]);
+            position = Position.FromMoves(parts[0]);
         }
         catch (FormatException e)
         {
             throw new FormatException($"Line {lineNumber}: {e.Message}", e);
         }
 
-        return new BookLine(parts[0], score);
+        return (new BookLine(parts[0], score), position);
     }
 
     /// <param name="comment">Written first, each line prefixed with "# ".</param>

@@ -32,17 +32,19 @@ public sealed class OpeningBook
     public static OpeningBook Load(Stream stream)
     {
         using var reader = new StreamReader(stream);
-        return FromLines(BookFile.Read(reader));
+        return Create(BookFile.ReadWithPositions(reader));
     }
 
     /// <exception cref="FormatException">A position has two different scores.</exception>
-    public static OpeningBook FromLines(IEnumerable<BookLine> lines)
+    public static OpeningBook FromLines(IEnumerable<BookLine> lines) =>
+        Create(lines.Select(line => (line, Position.FromMoves(line.Moves))));
+
+    private static OpeningBook Create(IEnumerable<(BookLine Line, Position Position)> lines)
     {
         var entries = new List<ulong>();
         int depth = -1;
-        foreach (BookLine line in lines)
+        foreach ((BookLine line, Position position) in lines)
         {
-            Position position = Position.FromMoves(line.Moves);
             entries.Add(position.CanonicalKey << ScoreBits | (byte)(line.Score + ScoreOffset));
             depth = Math.Max(depth, position.Moves);
         }
