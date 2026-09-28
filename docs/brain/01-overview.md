@@ -14,7 +14,7 @@ The solution [Connect4.Net.slnx](../../Connect4.Net/Connect4.Net.slnx) has five 
 | `Connect4.App` | Class library (`net10.0`) | View models (CommunityToolkit.Mvvm), settings, service interfaces, generated sounds |
 | `Connect4.WPF` | WPF app (`net10.0-windows`) | The desktop window, dialogs and services |
 | `Connect4.Web` | Blazor WebAssembly (`net10.0`) | The web version; the engine runs in a Web Worker |
-| `Connect4.Tools` | Console app (`net10.0`) | `book generate` and `book verify` (chapter 14) |
+| `Connect4.Tools` | Console app (`net10.0`) | `book generate` and `book verify` (chapter 11) |
 | `Connect4.Engine.Tests` | xUnit | Engine tests, including Pascal Pons' test positions |
 | `Connect4.App.Tests` | xUnit (`net10.0-windows`) | View model tests with fake services |
 
@@ -42,8 +42,8 @@ flowchart LR
 | `Endgame/EndgameSolver`, `Endgame/EndgameTable` | 09 | The exact C++ solver and its hash table |
 | `SearchLimits`, `Search/TimeControl` | 10 | Fixed depth, time per move, time per game |
 | `SearchResult`, `SearchInfo`, `ScoreKind`, `Scores` | 07 | Results, progress reports and score conventions |
-| `Book/OpeningBook`, `Book/BookBuilder`, `Book/BookFile` | 14 | The opening book: lookup, building, the text format |
-| `ComputerPlayer` | 11 | The entry point for the app: one move for a game |
+| `Book/OpeningBook`, `Book/BookBuilder`, `Book/BookFile` | 11 | The opening book: lookup, building, the text format |
+| `ComputerPlayer` | 12 | The entry point for the app: one move for a game |
 
 ## Where the ideas come from
 
@@ -57,10 +57,10 @@ flowchart LR
 
 ## The life of one computer move
 
-1. The human drops a disc; `MainViewModel` plays it and starts the computer (chapter 11).
+1. The human drops a disc; `MainViewModel` plays it and starts the computer (chapter 12).
 2. The view model asks the `IEngineHost` for a move with the game's moves and the `SearchLimits` from the settings. On the desktop the engine runs on a thread-pool thread; in the browser in a Web Worker.
 3. `ComputerPlayer.ChooseMove` checks that the game is not over and calls `SearchEngine.Search`.
-4. In the first 9 plies `Search` plays the best move from the opening book at once (chapter 14).
+4. In the first 9 plies `Search` plays the best move from the opening book at once (chapter 11).
 5. Otherwise it plays a winning move at once, returns a loss if every move loses, and plays a single non-losing move without searching.
 6. Otherwise it searches depth 1, 2, 3, … (chapter 07) until the result is exact or the depth or soft time limit is reached (chapter 10). Each root move sends a `SearchInfo` to the analysis panel.
 7. Near the end of the game the endgame solver may take over (chapter 09).

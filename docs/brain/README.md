@@ -49,17 +49,18 @@ The time limit can stop the search at any point; the best move of the last finis
 | 08 | [Transposition table](08-transposition-table.md) | One packed 64-bit entry, the bijective hash, replacement |
 | 09 | [Endgame solver](09-endgame-solver.md) | The C++ solver, its scores and table, when it is used |
 | 10 | [Time control](10-time-control.md) | Time modes, soft and hard limits, Move Now |
-| 11 | [App integration](11-app-integration.md) | The game loop, threading, the browser worker, settings |
-| 12 | [Glossary](12-glossary.md) | The terms used in these documents |
-| 13 | [References](13-references.md) | Articles and source code on the internet |
-| 14 | [Opening book](14-opening-book.md) | The solved first 9 plies, how the book is made and used |
+| 11 | [Opening book](11-opening-book.md) | The solved first 9 plies, how the book is made and used |
+| 12 | [App integration](12-app-integration.md) | The game loop, threading, the browser worker, settings |
+| 13 | [Glossary](13-glossary.md) | The terms used in these documents |
+| 14 | [References](14-references.md) | Articles and source code on the internet |
 
 ## Reading paths
 
 - **Everything:** read the chapters in order.
-- **Just the search:** 01, 02, 03, 05, 06, 07, 08, 09, 14.
+- **Just the search:** 01, 02, 03, 05, 06, 07, 08, 09, 11.
+- **Just the opening book:** 01, 02 (the mirror key), 09, 11.
 - **Tuning the engine:** 05, 06, 07, 09, 10.
-- **Changing the app:** 01, 10, 11.
+- **Changing the app:** 01, 10, 12.
 
 ## How to view these documents
 

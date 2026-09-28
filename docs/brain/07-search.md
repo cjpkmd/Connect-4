@@ -19,7 +19,7 @@ Scores are from the side to move ([Scores.cs](../../Connect4.Net/Connect4.Engine
 
 Because $n$ is the absolute move number, a faster win scores higher, and the score of a position does not depend on where the search started, so it can be stored in the hash table as it is. `Scores.IsDecided(score)` is true beyond ±1 000; the app shows such scores as "Red wins in 3 moves".
 
-`SearchResult` returns the move (0-based column), the score, the `ScoreKind` (`None`, `Heuristic`, `Exact`), the depth, the nodes, the time, the expected line of play (the principal variation, read from the hash table) and `FromBook`, which is true for a move from the opening book (chapter 14).
+`SearchResult` returns the move (0-based column), the score, the `ScoreKind` (`None`, `Heuristic`, `Exact`), the depth, the nodes, the time, the expected line of play (the principal variation, read from the hash table) and `FromBook`, which is true for a move from the opening book (chapter 11).
 
 ## Search as a whole
 
@@ -77,7 +77,7 @@ This costs a little time at the root only. After each iteration the best moves a
 
 ## Progress
 
-After each root move a `SearchInfo` is reported: depth, the move just searched, the best move, the score, the nodes, the time, the principal variation, and whether the endgame solver is running. The app shows it in the analysis panel (chapter 11).
+After each root move a `SearchInfo` is reported: depth, the move just searched, the best move, the score, the nodes, the time, the principal variation, and whether the endgame solver is running. The app shows it in the analysis panel (chapter 12).
 
 ## Speed
 

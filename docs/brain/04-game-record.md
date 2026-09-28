@@ -22,7 +22,7 @@
 
 When a move wins, `Play` stores the mover as the winner and uses `Position.FindFours` for the winning line. The position after a winning move contains a four, so it must not be searched; the app never asks for a computer move in a finished game.
 
-`Undo` and `Redo` only move `Ply`; the moves after it are kept until a new move is played. The app decides how far to go back: against the computer back to the human's previous turn, in human against human one move (chapter 11).
+`Undo` and `Redo` only move `Ply`; the moves after it are kept until a new move is played. The app decides how far to go back: against the computer back to the human's previous turn, in human against human one move (chapter 12).
 
 ## The text format
 

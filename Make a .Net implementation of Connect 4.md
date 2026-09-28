@@ -350,10 +350,10 @@ As Stello's `docs/brain`, chapters in Markdown, also shown in the web app:
 8. Transposition table
 9. Endgame solver
 10. Time control
-11. App integration
-12. Glossary
-13. References (Pascal Pons' blog: http://blog.gamesolver.org)
-14. Opening book (added last, so the numbers of the existing chapters stay)
+11. Opening book
+12. App integration
+13. Glossary
+14. References (Pascal Pons' blog: http://blog.gamesolver.org)
 
 Plus `Connect 4 porting documentation.md` like Stello's: per part, the C++ original, the C# code, and whether it is a 1:1 port or changed.
 
@@ -370,4 +370,4 @@ Plus `Connect 4 porting documentation.md` like Stello's: per part, the C++ origi
 9. Blazor web app, Web Worker, appearance/themes, docs pages.
 10. Documentation, GitHub Actions workflow, Azure Static Web App.
 11. Opening book generator: `Mirror`/`CanonicalKey`, `Connect4.Engine/Book` (enumeration, back-up, file format, `OpeningBook`), `Connect4.Tools` with `book generate` (parallel, resumable) and `book verify`, tests with small depths and a fake solver.
-12. Generate the depth-6 book on this computer (about 35–45 minutes) and verify it. Engine integration (`SearchEngine`, `FromBook`, `UseBook`), the setting in WPF and web, analysis "Book", tests, docs chapter 14, porting documentation, About text. Afterwards the book was raised to depth 9 (2 hours 7 minutes), with a faster loader.
+12. Generate the depth-6 book on this computer (about 35–45 minutes) and verify it. Engine integration (`SearchEngine`, `FromBook`, `UseBook`), the setting in WPF and web, analysis "Book", tests, docs chapter 11 (the opening book chapter; App integration, Glossary and References move to 12–14, as in Stello), porting documentation, About text. Afterwards the book was raised to depth 9 (2 hours 7 minutes), with a faster loader.

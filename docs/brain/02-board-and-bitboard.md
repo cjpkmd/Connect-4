@@ -57,7 +57,7 @@ The cell a disc lands on in column $c$ is `(Mask + BottomMaskColumn(c)) & Column
 
 `Key = Current + Mask` is a unique 49-bit number for the position. In each column, `Mask + BottomMask` has a single 1 just above the top disc; adding `Current` puts the side to move's discs below it, so both the height and the colours can be read back. `Key` is that number minus the constant `BottomMask`, so it is unique too. Two move orders that reach the same discs (transpositions, e.g. `1234` and `3214`) have the same key. It is used by both hash tables (chapters 08 and 09).
 
-The C++ code also has a mirror-symmetric base-3 key (`key3`) for its opening book. It was not ported; the opening book (chapter 14) uses `CanonicalKey` instead: the smaller of `Key` and `Mirror().Key`, where `Mirror()` swaps the 7-bit column groups, so a position and its mirror image get the same key.
+The C++ code also has a mirror-symmetric base-3 key (`key3`) for its opening book. It was not ported; the opening book (chapter 11) uses `CanonicalKey` instead: the smaller of `Key` and `Mirror().Key`, where `Mirror()` swaps the 7-bit column groups, so a position and its mirror image get the same key.
 
 ## Text
 

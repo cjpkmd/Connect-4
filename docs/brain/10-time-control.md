@@ -29,7 +29,7 @@ How long the computer may think is set in the Settings dialog, with the same thr
 | Time per game | $\max(10\ \text{ms}, \text{remaining} / \max(1, \lfloor(\text{empty} + 1) / 2\rfloor))$ | 2/3 of it | All of it |
 | Fixed depth, Solve | — | None | None |
 
-In time-per-game mode the computer makes at most half of the remaining moves, so the time left is shared evenly over them. When the clock is used up, every move still gets 10 ms. The app keeps the computer's clock and gives the time back when moves are taken back (chapter 11).
+In time-per-game mode the computer makes at most half of the remaining moves, so the time left is shared evenly over them. When the clock is used up, every move still gets 10 ms. The app keeps the computer's clock and gives the time back when moves are taken back (chapter 12).
 
 - After each depth the search stops if the soft limit has passed, because the next depth would take longer than the time left.
 - The hard limit is checked every 1 024 nodes. When it is reached, the running depth is abandoned and the result of the last finished depth is used.
@@ -44,4 +44,4 @@ In time-per-game mode the computer makes at most half of the remaining moves, so
 | `moveNowToken` | Stop and return the best move found so far (Game > Move Now, Ctrl+M) |
 | `cancellationToken` | Stop and throw `OperationCanceledException` (New Game, Undo, Open, changing the mode, closing the window) |
 
-Both are checked with the hard limit every 1 024 nodes. In the browser the worker cannot see the tokens while it searches, so the page terminates the worker instead (chapter 11).
+Both are checked with the hard limit every 1 024 nodes. In the browser the worker cannot see the tokens while it searches, so the page terminates the worker instead (chapter 12).
