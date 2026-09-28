@@ -41,7 +41,7 @@ Mirror Stello's layout. The solution is `Connect4.Net/Connect4.Net.slnx` with th
 | `Connect4.Engine.Tests` | xUnit | net10.0 | `Stello.Engine.Tests` |
 | `Connect4.App.Tests` | xUnit, view model tests with fake services | net10.0-windows | `Stello.Net.Tests` |
 
-Added in phase 11: `Connect4.Tools` console app (net10.0), first with the opening book generator (4.9). Later: benchmarks, engine-vs-engine matches and comparison with the C++ program. The book logic that can be tested (enumeration, back-up, file format) lives in `Connect4.Engine/Book`; the tool is a thin command line around it (arguments, worker threads, files).
+Added in phase 11: `Connect4.Tools` console app (net10.0), first with the opening book generator (4.9), then `endgame measure`, which measured the endgame threshold (4.3). Later: more benchmarks, engine-vs-engine matches and comparison with the C++ program. The book logic that can be tested (enumeration, back-up, file format) lives in `Connect4.Engine/Book`; the tool is a thin command line around it (arguments, worker threads, files).
 
 References: `WPF` → `App`, `Engine`; `Web` → `App`, `Engine`; `App` → `Engine`; `Tools` → `Engine`.
 
@@ -115,7 +115,22 @@ flowchart LR
 3. If it finishes, its exact result is used: the best move and an exact score. If it runs out of time or Move Now is pressed, the heuristic result from step 1 is used.
 4. Once a position is solved, later moves in the same game are usually solved at once (the solver's table is kept between moves).
 
-The endgame threshold is a setting in the Settings dialog, used only in the two time modes: 0–42 empty cells, default 24, 0 = never.
+The endgame threshold is a setting in the Settings dialog, used only in the two time modes: 0–42 empty cells, default 30, 0 = never.
+
+The default was first 24 and was raised to 30 after a measurement (`Connect4.Tools endgame measure`, desktop, one thread, every move solved from an empty table as the engine does). The positions came from 60 engine games with 15 % random moves and from the test sets `Test_L1_R2`, `Test_L1_R3` and `Test_L2_R2`:
+
+| Empty cells | 90 % of the solves finish within (games / test sets) | Share within 1.7 s (games) |
+|---|---|---|
+| 24 | 0.014 s / 0.018 s | 100 % |
+| 28 | 0.10 s / 0.15 s | 100 % |
+| 30 | 0.51 s / 0.37 s | 98 % |
+| 31 | 1.40 s / 0.71 s | 92 % |
+| 32 | 2.36 s / 1.74 s | 85 % |
+| 33 | 3.74 s / 3.23 s | 69 % |
+| 34 | 7.0 s / 4.7 s | 51 % |
+| 36 | 26 s / 17.6 s | 8 % |
+
+The time roughly doubles with each extra empty cell. With the default 5 s per move the solver gets at most the last 1.7 s (the search stops starting new depths at 2/3 of the time). 31 is the largest count where 90 % finish within 1.7 s on the desktop; the browser is about half as fast, so the default is 30 for both. A solve that does not finish costs only thinking time, not playing strength, and in a game the solver's table is kept between moves, so real solves are faster than measured.
 
 The C++ solver returns one score for the position, not a move. The best move is found as in the C++ `analyze`: solve the position after each non-losing move, best score wins (ties: see 4.7). A strong solve is used (not the weak win/draw/loss solve), because the computer must play the fastest win.
 
@@ -225,7 +240,7 @@ Goal: the computer plays the first plies perfectly and at once, so the weak spot
 
 **Choice: depth 9.** The first recommendation was depth 6 (the first 6 plies, 11,094 positions, about 110 KB text, 37 minutes), and that book was made first. It was then raised to depth 9: the first 9 plies (5 moves of Red, 4 of Yellow) come from the book, 399,029 positions, 2 hours 7 minutes with 12 workers, well within the one-day limit. The price is size: 4.7 MB as text (about 750 KB more to download in the web version, Brotli), 3.2 MB in memory, and about 150 ms to load on the desktop (the web worker loads it when it starts; the first book move comes after about half a second). The depth is a parameter of the tool.
 
-Side result: positions after 8 plies are solved in 0.5 s on average (max 11 s), so the endgame threshold default of 24 empty cells (4.3) is very cautious. It can be tuned later; that is not part of the book work.
+Side result: positions after 8 plies are solved in 0.5 s on average (max 11 s), so the first endgame threshold default of 24 empty cells was very cautious. It was then measured and raised to 30 (4.3).
 
 **File format**
 

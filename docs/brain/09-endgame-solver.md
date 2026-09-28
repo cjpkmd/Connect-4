@@ -51,13 +51,36 @@ It is created the first time the solver runs and kept for the whole session: its
 
 | Time mode | The solver runs when | Its time |
 |---|---|---|
-| Seconds per move, minutes per game | The empty cells are at most the **endgame threshold** (setting, 0–42, default 24; 0 = never) and the hard time limit is not reached | Until the hard limit |
+| Seconds per move, minutes per game | The empty cells are at most the **endgame threshold** (setting, 0–42, default 30; 0 = never) and the hard time limit is not reached | Until the hard limit |
 | Fixed depth | The empty cells are at most the depth setting | No limit; only Move Now stops it |
 | `Solve` (tests) | Always | No limit |
 
 The heuristic search runs first. In fixed-depth mode it is then limited to 8 plies, because it only has to give a move in case Move Now stops the solver. The solver is skipped when the heuristic search has already found a final result.
 
 If the solver runs out of time or Move Now is pressed, it throws `OperationCanceledException`, and the move of the heuristic search is played. The time limit is checked with a clock every 1 024 nodes, not with a timer: in the browser the engine runs in a Web Worker, where a timer cannot fire while the search runs.
+
+## Choosing the threshold
+
+The search stops starting new depths at 2/3 of the time for the move (chapter 10), so with the default 5 s per move the solver gets at most the last 1.7 s. `Connect4.Tools endgame measure` times the solve the engine does (every move, from an empty table) by number of empty cells:
+
+```text
+Connect4.Tools endgame measure [--from 24] [--to 33] [--games 100] [--per-set 50] [--limit-ms 1700] [--cap 30] [--workers 1]
+```
+
+It uses positions from games the engine plays against itself, with 15 % random moves as a human would make, and from Pascal Pons' test sets `Test_L1_R2`, `Test_L1_R3` and `Test_L2_R2`. The result on the desktop, with one thread:
+
+| Empty cells | 90 % finish within (games / test sets) | Share within 1.7 s (games) |
+|---|---|---|
+| 24 | 0.014 s / 0.018 s | 100 % |
+| 28 | 0.10 s / 0.15 s | 100 % |
+| 30 | 0.51 s / 0.37 s | 98 % |
+| 31 | 1.40 s / 0.71 s | 92 % |
+| 32 | 2.36 s / 1.74 s | 85 % |
+| 33 | 3.74 s / 3.23 s | 69 % |
+| 34 | 7.0 s / 4.7 s | 51 % |
+| 36 | 26 s / 17.6 s | 8 % |
+
+The time roughly doubles with each extra empty cell. 31 is the largest count where 90 % finish within 1.7 s; the browser is about half as fast, so the default is 30 (it was 24 before the measurement). A solve that does not finish only costs thinking time: the move of the heuristic search is played. In a game the table is kept between moves, so real solves are faster than measured.
 
 ## Speed
 

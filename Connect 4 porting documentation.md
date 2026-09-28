@@ -172,7 +172,11 @@ The engine is described in detail in [docs/brain](docs/brain/README.md).
 
 **Tests:** the built-in book has the known first-move scores and a consistent back-up, and agrees with every position of at most 9 moves in `Test_L1_R1`–`R3`; the search uses it, picks among equal book moves at random, and searches when the book is off. `book verify` solved 400 random positions of the depth-9 book again, all correct.
 
+### Endgame threshold
+
+The book runs showed that the solver is much faster than the first default threshold of 24 empty cells assumed. `Connect4.Tools endgame measure` timed the engine's solve (every move, from an empty table) on positions from engine games and from the test sets: at 24 empty cells 90 % finish within 0.02 s, at 31 within 1.4 s, at 33 within 3.7 s; the time roughly doubles per empty cell. With 5 s per move the solver gets at most 1.7 s, so the default was raised to **30** (31 on the desktop, one less for the slower browser). Details in [docs/brain/09-endgame-solver.md](docs/brain/09-endgame-solver.md#choosing-the-threshold).
+
 ## Not done
 
-- **Tools project:** benchmarks, engine-against-engine matches for tuning, and a command line like the C++ `main.cpp` are left for later; `Connect4.Tools` only makes the opening book so far.
+- **Tools project:** engine-against-engine matches for tuning, a node-rate comparison with the C++ program and a command line like the C++ `main.cpp` are left for later; `Connect4.Tools` makes the opening book and measures the endgame threshold.
 - **Tuning:** the evaluation weights are set by hand (phase 4).

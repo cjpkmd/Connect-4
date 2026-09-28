@@ -18,7 +18,9 @@ public enum TimeControlMode
 public sealed record SearchLimits
 {
     public const int MaxDepth = Position.CellCount;
-    public const int DefaultEndgameThreshold = 24;
+
+    // Measured with "Connect4.Tools endgame measure": 90 % of the solves finish in the time left at 5 s per move.
+    public const int DefaultEndgameThreshold = 30;
 
     private readonly int _endgameThreshold = DefaultEndgameThreshold;
 

@@ -14,7 +14,7 @@ The solution [Connect4.Net.slnx](../../Connect4.Net/Connect4.Net.slnx) has five 
 | `Connect4.App` | Class library (`net10.0`) | View models (CommunityToolkit.Mvvm), settings, service interfaces, generated sounds |
 | `Connect4.WPF` | WPF app (`net10.0-windows`) | The desktop window, dialogs and services |
 | `Connect4.Web` | Blazor WebAssembly (`net10.0`) | The web version; the engine runs in a Web Worker |
-| `Connect4.Tools` | Console app (`net10.0`) | `book generate` and `book verify` (chapter 11) |
+| `Connect4.Tools` | Console app (`net10.0`) | `book generate` and `book verify` (chapter 11), `endgame measure` (chapter 09) |
 | `Connect4.Engine.Tests` | xUnit | Engine tests, including Pascal Pons' test positions |
 | `Connect4.App.Tests` | xUnit (`net10.0-windows`) | View model tests with fake services |
 

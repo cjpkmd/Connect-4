@@ -56,7 +56,7 @@ public class TimeControlAndScoresTests
     [Fact]
     public void EndgameThreshold_DefaultsTo24()
     {
-        Assert.Equal(24, SearchLimits.TimePerMove(TimeSpan.FromSeconds(1)).EndgameThreshold);
+        Assert.Equal(30, SearchLimits.TimePerMove(TimeSpan.FromSeconds(1)).EndgameThreshold);
     }
 
     [Fact]

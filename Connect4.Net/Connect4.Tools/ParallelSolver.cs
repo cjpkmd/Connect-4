@@ -15,28 +15,41 @@ internal static class ParallelSolver
         int tableLogSize,
         Action<string, int> onSolved,
         Action onTick,
+        CancellationToken cancellation) =>
+        ForEach(
+            positions,
+            workers,
+            tableLogSize,
+            (solver, moves) => onSolved(moves, solver.Solve(Position.FromMoves(moves), cancellation: cancellation)),
+            onTick,
+            cancellation);
+
+    /// <param name="work">Called on the worker threads, once per item; an <see cref="OperationCanceledException"/> stops that worker.</param>
+    /// <param name="onTick">Called about once a second on the calling thread while the workers run.</param>
+    public static void ForEach<T>(
+        IReadOnlyList<T> items,
+        int workers,
+        int tableLogSize,
+        Action<EndgameSolver, T> work,
+        Action onTick,
         CancellationToken cancellation)
     {
         int next = -1;
-        var threads = Enumerable.Range(0, Math.Min(workers, positions.Count))
+        var threads = Enumerable.Range(0, Math.Min(workers, items.Count))
             .Select(_ => new Thread(() =>
             {
                 var solver = new EndgameSolver(tableLogSize);
                 int index;
-                while (!cancellation.IsCancellationRequested && (index = Interlocked.Increment(ref next)) < positions.Count)
+                while (!cancellation.IsCancellationRequested && (index = Interlocked.Increment(ref next)) < items.Count)
                 {
-                    string moves = positions[index];
-                    int score;
                     try
                     {
-                        score = solver.Solve(Position.FromMoves(moves), cancellation: cancellation);
+                        work(solver, items[index]);
                     }
                     catch (OperationCanceledException)
                     {
                         return;
                     }
-
-                    onSolved(moves, score);
                 }
             })
             { IsBackground = true })

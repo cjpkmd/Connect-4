@@ -17,7 +17,7 @@ How long the computer may think is set in the Settings dialog, with the same thr
 | `TimePerGame` | `SearchLimits.TimePerGame(remaining)` | 1–60 minutes for the whole game |
 | `Solve` | `SearchLimits.Solve` | Not in the app; the tests use it |
 
-`EndgameThreshold` (0–42, default 24) says from how many empty cells the endgame solver is tried in the two time modes (chapter 09). The app's `GameSettings.ToLimits` builds the limits from the settings.
+`EndgameThreshold` (0–42, default 30) says from how many empty cells the endgame solver is tried in the two time modes (chapter 09, which also shows how the default was measured). The app's `GameSettings.ToLimits` builds the limits from the settings.
 
 ## Soft and hard limits
 
